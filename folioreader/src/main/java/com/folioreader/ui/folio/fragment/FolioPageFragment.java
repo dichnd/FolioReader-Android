@@ -47,6 +47,7 @@ import com.folioreader.model.event.RewindIndexEvent;
 import com.folioreader.model.event.UpdateHighlightEvent;
 import com.folioreader.model.search.SearchItem;
 import com.folioreader.model.sqlite.HighLightTable;
+import com.folioreader.ui.base.FolioBookHolder;
 import com.folioreader.ui.base.HtmlTask;
 import com.folioreader.ui.base.HtmlTaskCallback;
 import com.folioreader.ui.base.HtmlUtil;
@@ -75,7 +76,7 @@ import java.util.regex.Pattern;
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public class FolioPageFragment
         extends Fragment
-        implements HtmlTaskCallback, MediaControllerCallbacks, FolioWebView.SeekBarListener {
+        implements HtmlTaskCallback, MediaControllerCallbacks, FolioWebView.SeekBarListener, FolioBookHolder {
 
     public static final String LOG_TAG = FolioPageFragment.class.getSimpleName();
     public static final String KEY_FRAGMENT_FOLIO_POSITION = "com.folioreader.ui.folio.fragment.FolioPageFragment.POSITION";
@@ -406,7 +407,7 @@ public class FolioPageFragment
 
         FrameLayout webViewLayout = mRootView.findViewById(R.id.webViewLayout);
         mWebview = webViewLayout.findViewById(R.id.folioWebView);
-        mWebview.setParentFragment(this);
+        mWebview.setFolioBookHolder(this);
         webViewPager = webViewLayout.findViewById(R.id.webViewPager);
 
         if (getActivity() instanceof FolioActivityCallback)
@@ -699,8 +700,14 @@ public class FolioPageFragment
         mWebview.setHorizontalPageCount(horizontalPageCount);
     }
 
+    @Override
     public void loadRangy(String rangy) {
         mWebview.loadUrl(String.format("javascript:if(typeof ssReader !== \"undefined\"){ssReader.setHighlights('%s');}", rangy));
+    }
+
+    @Override
+    public void setSearchItemVisible(SearchItem item) {
+        searchItemVisible = item;
     }
 
     private void setupScrollBar() {
@@ -841,6 +848,12 @@ public class FolioPageFragment
         outState.putParcelable(BUNDLE_SEARCH_ITEM, searchItemVisible);
     }
 
+    @Override
+    public String getCurrentHref() {
+        return spineItem.getHref();
+    }
+
+    @Override
     public void highlight(HighlightImpl.HighlightStyle style, boolean isAlreadyCreated) {
         if (!isAlreadyCreated) {
             mWebview.loadUrl(String.format("javascript:if(typeof ssReader !== \"undefined\"){ssReader.highlightSelection('%s');}", HighlightImpl.HighlightStyle.classForStyle(style)));
@@ -869,6 +882,7 @@ public class FolioPageFragment
         }
     }
 
+    @Override
     public String getPageName() {
         return mBookTitle + "$" + spineItem.getHref();
     }

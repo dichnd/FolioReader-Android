@@ -26,8 +26,10 @@ import com.folioreader.Config
 import com.folioreader.Constants
 import com.folioreader.R
 import com.folioreader.model.HighLight
+import com.folioreader.model.HighlightImpl
 import com.folioreader.model.HighlightImpl.HighlightStyle
 import com.folioreader.model.sqlite.HighLightTable
+import com.folioreader.ui.base.FolioBookHolder
 import com.folioreader.ui.folio.activity.FolioActivity
 import com.folioreader.ui.folio.activity.FolioActivityCallback
 import com.folioreader.ui.folio.fragment.DictionaryFragment
@@ -87,7 +89,9 @@ class FolioWebView : WebView {
     private lateinit var webViewPager: WebViewPager
     private lateinit var uiHandler: Handler
     private lateinit var folioActivityCallback: FolioActivityCallback
-    private lateinit var parentFragment: FolioPageFragment
+//    private lateinit var parentFragment: FolioPageFragment
+//    private lateinit var parentView: FolioPageView
+    private lateinit var folioBookHolder: FolioBookHolder
 
     private var actionMode: ActionMode? = null
     private var textSelectionCb: TextSelectionCb? = null
@@ -164,7 +168,7 @@ class FolioWebView : WebView {
 
     @JavascriptInterface
     fun dismissPopupWindow(): Boolean {
-        Log.d(LOG_TAG, "-> dismissPopupWindow -> " + parentFragment.spineItem.href)
+        Log.d(LOG_TAG, "-> dismissPopupWindow -> " + folioBookHolder.currentHref)
         val wasShowing = popupWindow.isShowing
         if (Looper.getMainLooper().thread == Thread.currentThread()) {
             popupWindow.dismiss()
@@ -304,15 +308,15 @@ class FolioWebView : WebView {
     }
 
     private fun showDictDialog(selectedText: String?) {
-        val dictionaryFragment = DictionaryFragment()
-        val bundle = Bundle()
-        bundle.putString(Constants.SELECTED_WORD, selectedText?.trim())
-        dictionaryFragment.arguments = bundle
-        dictionaryFragment.show(parentFragment.fragmentManager, DictionaryFragment::class.java.name)
+//        val dictionaryFragment = DictionaryFragment()
+//        val bundle = Bundle()
+//        bundle.putString(Constants.SELECTED_WORD, selectedText?.trim())
+//        dictionaryFragment.arguments = bundle
+//        dictionaryFragment.show(parentFragment.fragmentManager, DictionaryFragment::class.java.name)
     }
 
     private fun onHighlightColorItemsClicked(style: HighlightStyle, isAlreadyCreated: Boolean) {
-        parentFragment.highlight(style, isAlreadyCreated)
+        folioBookHolder.highlight(style, isAlreadyCreated)
         dismissPopupWindow()
     }
 
@@ -325,8 +329,8 @@ class FolioWebView : WebView {
 
         val highlightImpl = HighLightTable.getHighlightForRangy(id)
         if (HighLightTable.deleteHighlight(id)) {
-            val rangy = HighlightUtil.generateRangyString(parentFragment.pageName)
-            uiHandler.post { parentFragment.loadRangy(rangy) }
+            val rangy = HighlightUtil.generateRangyString(folioBookHolder.pageName)
+            uiHandler.post { folioBookHolder.loadRangy(rangy) }
             if (highlightImpl != null) {
                 HighlightUtil.sendHighlightBroadcastEvent(context, highlightImpl,
                         HighLight.HighLightAction.DELETE)
@@ -344,8 +348,8 @@ class FolioWebView : WebView {
         }
     }
 
-    fun setParentFragment(parentFragment: FolioPageFragment) {
-        this.parentFragment = parentFragment
+    fun setFolioBookHolder(holder: FolioBookHolder) {
+        this.folioBookHolder = holder
     }
 
     fun setFolioActivityCallback(folioActivityCallback: FolioActivityCallback) {
@@ -426,7 +430,8 @@ class FolioWebView : WebView {
         if (lastScrollType == LastScrollType.USER) {
             //Log.d(LOG_TAG, "-> onScrollChanged -> scroll initiated by user");
             loadUrl(context.getString(R.string.make_search_results_invisible))
-            parentFragment.searchItemVisible = null
+//            parentFragment.searchItemVisible = null
+            folioBookHolder.setSearchItemVisible(null)
         }
 
         lastScrollType = null
