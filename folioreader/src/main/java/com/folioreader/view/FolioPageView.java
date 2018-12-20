@@ -615,6 +615,26 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
         }
     }
 
+    public void scrollToLast() {
+        boolean isPageLoading = loadingView == null || loadingView.getVisibility() == View.VISIBLE;
+        Log.v(LOG_TAG, "-> scrollToLast -> isPageLoading = " + isPageLoading);
+
+        if (!isPageLoading) {
+            loadingView.show();
+            mWebview.loadUrl("javascript:scrollToLast()");
+        }
+    }
+
+    public void scrollToFirst() {
+        boolean isPageLoading = loadingView == null || loadingView.getVisibility() == View.VISIBLE;
+        Log.v(LOG_TAG, "-> scrollToFirst -> isPageLoading = " + isPageLoading);
+
+        if (!isPageLoading) {
+            loadingView.show();
+            mWebview.loadUrl("javascript:scrollToFirst()");
+        }
+    }
+
     /**
      * Calls the /assets/js/Bridge.js#getFirstVisibleSpan(boolean)
      */
