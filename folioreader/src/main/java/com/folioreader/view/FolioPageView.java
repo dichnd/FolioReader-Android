@@ -542,6 +542,18 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
         }
     };
 
+    public void scrollToAnchorId(String href) {
+
+        if (!TextUtils.isEmpty(href) && href.indexOf('#') != -1) {
+            mAnchorId = href.substring(href.lastIndexOf('#') + 1);
+            if (loadingView != null && loadingView.getVisibility() != View.VISIBLE) {
+                loadingView.show();
+                mWebview.loadUrl(String.format(getContext().getResources().getString(R.string.go_to_anchor), mAnchorId));
+                mAnchorId = null;
+            }
+        }
+    }
+
     private WebChromeClient webChromeClient = new WebChromeClient() {
 
         @Override
