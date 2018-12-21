@@ -202,12 +202,15 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
 
     private void initSeekbar() {
         mScrollSeekbar = (VerticalSeekbar) mRootView.findViewById(R.id.scrollSeekbar);
-        if (mScrollSeekbar.getProgressDrawable() != null) {
-            mScrollSeekbar.getProgressDrawable()
+            getSeekBarDrawable()
                     .setColorFilter(getResources()
                                     .getColor(R.color.app_green),
                             PorterDuff.Mode.SRC_IN);
-        }
+    }
+
+    private Drawable getSeekBarDrawable() {
+        if (mScrollSeekbar.getProgressDrawable() != null) return mScrollSeekbar.getProgressDrawable();
+        else return mScrollSeekbar.getIndeterminateDrawable();
     }
 
     private void initAnimations() {
@@ -336,7 +339,7 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
     }
 
     private void setupScrollBar() {
-        UiUtil.setColorIntToDrawable(mConfig.getThemeColor(), mScrollSeekbar.getProgressDrawable());
+        UiUtil.setColorIntToDrawable(mConfig.getThemeColor(), getSeekBarDrawable());
         Drawable thumbDrawable = ContextCompat.getDrawable(getContext(), R.drawable.icons_sroll);
         UiUtil.setColorIntToDrawable(mConfig.getThemeColor(), thumbDrawable);
         mScrollSeekbar.setThumb(thumbDrawable);
