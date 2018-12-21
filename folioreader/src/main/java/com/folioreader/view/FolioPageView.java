@@ -202,10 +202,12 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
 
     private void initSeekbar() {
         mScrollSeekbar = (VerticalSeekbar) mRootView.findViewById(R.id.scrollSeekbar);
-        mScrollSeekbar.getProgressDrawable()
-                .setColorFilter(getResources()
-                                .getColor(R.color.app_green),
-                        PorterDuff.Mode.SRC_IN);
+        if (mScrollSeekbar.getProgressDrawable() != null) {
+            mScrollSeekbar.getProgressDrawable()
+                    .setColorFilter(getResources()
+                                    .getColor(R.color.app_green),
+                            PorterDuff.Mode.SRC_IN);
+        }
     }
 
     private void initAnimations() {
