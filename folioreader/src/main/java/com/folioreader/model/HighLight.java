@@ -14,7 +14,7 @@ public interface HighLight {
      * Highlight action
      */
     enum HighLightAction {
-        NEW, DELETE, MODIFY
+        TRIGGER, NEW, DELETE, MODIFY
     }
 
     /**

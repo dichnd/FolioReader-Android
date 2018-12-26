@@ -168,7 +168,7 @@ class FolioWebView : WebView {
 
     @JavascriptInterface
     fun dismissPopupWindow(): Boolean {
-        Log.d(LOG_TAG, "-> dismissPopupWindow -> " + folioBookHolder.currentHref)
+        Log.d(LOG_TAG, "-> dismissPopupWindow -> " + folioBookHolder.getCurrentHref())
         val wasShowing = popupWindow.isShowing
         if (Looper.getMainLooper().thread == Thread.currentThread()) {
             popupWindow.dismiss()
@@ -329,7 +329,7 @@ class FolioWebView : WebView {
 
         val highlightImpl = HighLightTable.getHighlightForRangy(id)
         if (HighLightTable.deleteHighlight(id)) {
-            val rangy = HighlightUtil.generateRangyString(folioBookHolder.pageName)
+            val rangy = HighlightUtil.generateRangyString(folioBookHolder.getPageName())
             uiHandler.post { folioBookHolder.loadRangy(rangy) }
             if (highlightImpl != null) {
                 HighlightUtil.sendHighlightBroadcastEvent(context, highlightImpl,
@@ -720,7 +720,9 @@ class FolioWebView : WebView {
             popupRect.right -= dx
         }
 
-        uiHandler.post { showTextSelectionPopup() }
+        if (folioBookHolder.showMenu()) uiHandler.post { showTextSelectionPopup() }
+        folioBookHolder.triggerHighlight(belowSelectionRect)
+        HighlightUtil.sendHighlightTriggerAt(context, belowSelectionRect)
     }
 
     private fun showTextSelectionPopup() {

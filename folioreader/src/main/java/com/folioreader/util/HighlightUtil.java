@@ -2,6 +2,7 @@ package com.folioreader.util;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -118,6 +119,14 @@ public class HighlightUtil {
                                                    HighLight.HighLightAction action) {
         LocalBroadcastManager.getInstance(context).sendBroadcast(
                 getHighlightBroadcastIntent(highlightImpl, action));
+    }
+
+    public static void sendHighlightTriggerAt(Context context, Rect rect) {
+        Bundle bundle = new Bundle();
+        bundle.putSerializable(HighLight.HighLightAction.class.getName(), HighLight.HighLightAction.TRIGGER);
+        bundle.putParcelable("rect", rect);
+        Intent intent = new Intent(HighlightImpl.BROADCAST_EVENT).putExtras(bundle);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 
     public static Intent getHighlightBroadcastIntent(HighlightImpl highlightImpl,

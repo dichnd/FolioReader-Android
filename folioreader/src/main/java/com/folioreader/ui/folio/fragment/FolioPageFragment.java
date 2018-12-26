@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -65,6 +66,7 @@ import com.folioreader.view.WebViewPager;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.jetbrains.annotations.NotNull;
 import org.readium.r2.shared.Link;
 
 import java.util.Locale;
@@ -969,5 +971,15 @@ public class FolioPageFragment
         Log.v(LOG_TAG, "-> resetSearchResults -> " + spineItem.getHref());
         mWebview.loadUrl(getString(R.string.reset_search_results));
         searchItemVisible = null;
+    }
+
+    @Override
+    public boolean showMenu() {
+        return true;
+    }
+
+    @Override
+    public void triggerHighlight(@NotNull Rect rect) {
+        Log.d(LOG_TAG, "triggerHighlight at: " + rect.toString());
     }
 }
