@@ -61,6 +61,8 @@ public class FolioReader {
             if (action == HighLight.HighLightAction.TRIGGER) {
                 Log.d("FolioReader", "Context hashcode 55555555555555");
                 Rect rect = intent.getParcelableExtra("rect");
+                Log.d("FolioReader", "" + (onHighlightListener == null));
+                Log.d("FolioReader", onHighlightListener.toString());
                 onHighlightListener.onTriggerHighlight(rect);
             } else {
                 HighlightImpl highlightImpl = intent.getParcelableExtra(HighlightImpl.INTENT);
@@ -212,6 +214,7 @@ public class FolioReader {
     }
 
     public FolioReader setOnHighlightListener(OnHighlightListener onHighlightListener) {
+        Log.d("FolioReader", "setOnHighlightListener: " + onHighlightListener.toString());
         this.onHighlightListener = onHighlightListener;
         return singleton;
     }
