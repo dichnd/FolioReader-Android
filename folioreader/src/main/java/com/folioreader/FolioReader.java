@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Rect;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.folioreader.model.HighLight;
@@ -53,11 +54,16 @@ public class FolioReader {
     private BroadcastReceiver highlightReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            HighlightImpl highlightImpl = intent.getParcelableExtra(HighlightImpl.INTENT);
             HighLight.HighLightAction action = (HighLight.HighLightAction)
                     intent.getSerializableExtra(HighLight.HighLightAction.class.getName());
-            if (onHighlightListener != null && highlightImpl != null && action != null) {
-                onHighlightListener.onHighlight(highlightImpl, action);
+            if (action == HighLight.HighLightAction.TRIGGER) {
+                Rect rect = intent.getParcelableExtra("rect");
+                onHighlightListener.onTriggerHighlight(rect);
+            } else {
+                HighlightImpl highlightImpl = intent.getParcelableExtra(HighlightImpl.INTENT);
+                if (onHighlightListener != null && highlightImpl != null && action != null) {
+                    onHighlightListener.onHighlight(highlightImpl, action);
+                }
             }
         }
     };

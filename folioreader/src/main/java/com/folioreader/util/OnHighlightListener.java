@@ -1,5 +1,7 @@
 package com.folioreader.util;
 
+import android.graphics.Rect;
+
 import com.folioreader.model.HighLight;
 import com.folioreader.model.HighlightImpl;
 
@@ -18,4 +20,5 @@ public interface OnHighlightListener {
      * @param type      type of event e.g new,edit or delete {@link com.folioreader.model.HighlightImpl.HighLightAction}.
      */
     void onHighlight(HighLight highlight, HighLight.HighLightAction type);
+    void onTriggerHighlight(Rect rect);
 }
