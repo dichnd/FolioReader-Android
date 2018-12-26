@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Rect;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 import com.folioreader.model.HighLight;
 import com.folioreader.model.HighlightImpl;
@@ -56,7 +57,9 @@ public class FolioReader {
         public void onReceive(Context context, Intent intent) {
             HighLight.HighLightAction action = (HighLight.HighLightAction)
                     intent.getSerializableExtra(HighLight.HighLightAction.class.getName());
+            Log.d("FolioReader", "444 123 Context hashcode " + context.hashCode() + "  " + action.name());
             if (action == HighLight.HighLightAction.TRIGGER) {
+                Log.d("FolioReader", "Context hashcode 55555555555555");
                 Rect rect = intent.getParcelableExtra("rect");
                 onHighlightListener.onTriggerHighlight(rect);
             } else {
@@ -108,6 +111,8 @@ public class FolioReader {
     private FolioReader(Context context) {
         this.context = context;
         DbAdapter.initialize(context);
+
+        Log.d("FolioReader", "Context hashcode " + context.hashCode());
 
         LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(context);
         localBroadcastManager.registerReceiver(highlightReceiver,

@@ -122,6 +122,7 @@ public class HighlightUtil {
     }
 
     public static void sendHighlightTriggerAt(Context context, Rect rect) {
+        Log.d("FolioReader", "111 Context hashcode " + context.hashCode());
         Bundle bundle = new Bundle();
         bundle.putSerializable(HighLight.HighLightAction.class.getName(), HighLight.HighLightAction.TRIGGER);
         bundle.putParcelable("rect", rect);
