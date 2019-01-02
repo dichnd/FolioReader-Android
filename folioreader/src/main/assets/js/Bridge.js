@@ -1138,8 +1138,10 @@ function escapeRegExp(str) {
 function getSelectionRect(element) {
     console.log("-> getSelectionRect");
 
+    var highlightId = null;
     var range;
     if (element !== undefined) {
+        highlightId = element.id;
         range = document.createRange();
         range.selectNodeContents(element);
     } else {
@@ -1148,7 +1150,7 @@ function getSelectionRect(element) {
 
     //var rect = range.getBoundingClientRect();
     var rect = RangeFix.getBoundingClientRect(range);
-    FolioWebView.setSelectionRect(rect.left, rect.top, rect.right, rect.bottom);
+    FolioWebView.setSelectionRect(rect.left, rect.top, rect.right, rect.bottom, highlightId);
 }
 
 function clearSelection() {

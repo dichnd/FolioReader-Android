@@ -14,7 +14,8 @@ public interface HighLight {
      * Highlight action
      */
     enum HighLightAction {
-        TRIGGER, NEW, DELETE, MODIFY
+        TRIGGER, NEW, DELETE, MODIFY,
+        DISMISS_POPUP
     }
 
     /**

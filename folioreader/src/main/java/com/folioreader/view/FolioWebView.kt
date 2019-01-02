@@ -107,6 +107,7 @@ class FolioWebView : WebView {
     private var lastTouchAction: Int = 0
     private var destroyed: Boolean = false
     private var handleHeight: Int = 0
+    private var selectedHighlightId: String? = null
 
     private var lastScrollType: LastScrollType? = null
 
@@ -178,6 +179,9 @@ class FolioWebView : WebView {
         selectionRect = Rect()
         uiHandler.removeCallbacks(isScrollingRunnable)
         isScrollingCheckDuration = 0
+        selectedHighlightId = null
+
+        HighlightUtil.sendHighlightBroadcastAction(context, HighLight.HighLightAction.DISMISS_POPUP)
         return wasShowing
     }
 
@@ -619,8 +623,8 @@ class FolioWebView : WebView {
     }
 
     @JavascriptInterface
-    fun setSelectionRect(left: Int, top: Int, right: Int, bottom: Int) {
-
+    fun setSelectionRect(left: Int, top: Int, right: Int, bottom: Int, highlightId: String?) {
+        selectedHighlightId = highlightId
         val currentSelectionRect: Rect
         val newLeft = (left * density).toInt()
         val newTop = (top * density).toInt()
@@ -720,9 +724,10 @@ class FolioWebView : WebView {
             popupRect.right -= dx
         }
 
-        if (folioBookHolder.showMenu()) uiHandler.post { showTextSelectionPopup() }
-        folioBookHolder.triggerHighlight(belowSelectionRect)
-        HighlightUtil.sendHighlightTriggerAt(context, belowSelectionRect)
+        uiHandler.post { showTextSelectionPopup() }
+//        if (folioBookHolder.showMenu()) uiHandler.post { showTextSelectionPopup() }
+//        folioBookHolder.triggerHighlight(belowSelectionRect)
+//        HighlightUtil.sendHighlightTriggerAt(context, belowSelectionRect)
     }
 
     private fun showTextSelectionPopup() {
@@ -745,8 +750,11 @@ class FolioWebView : WebView {
                 popupWindow.dismiss()
                 popupWindow = PopupWindow(viewTextSelection, WRAP_CONTENT, WRAP_CONTENT)
                 popupWindow.isClippingEnabled = false
-                popupWindow.showAtLocation(this@FolioWebView, Gravity.NO_GRAVITY,
+
+                if (folioBookHolder.showMenu()) popupWindow.showAtLocation(this@FolioWebView, Gravity.NO_GRAVITY,
                         popupRect.left, popupRect.top)
+                folioBookHolder.triggerHighlight(popupRect)
+                HighlightUtil.sendHighlightTriggerAt(context, popupRect, selectedHighlightId)
             } else {
                 Log.i(LOG_TAG, "-> Still scrolling, don't show Popup")
                 oldScrollX = currentScrollX

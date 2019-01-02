@@ -62,6 +62,7 @@ import com.folioreader.model.ReadPosition;
 import com.folioreader.model.event.MediaOverlayPlayPauseEvent;
 import com.folioreader.model.search.SearchItem;
 import com.folioreader.ui.folio.adapter.FolioPageFragmentAdapter;
+import com.folioreader.ui.folio.adapter.FolioPageViewAdapter;
 import com.folioreader.ui.folio.adapter.SearchAdapter;
 import com.folioreader.ui.folio.fragment.FolioPageFragment;
 import com.folioreader.ui.folio.fragment.MediaControllerFragment;
@@ -257,6 +258,7 @@ public class FolioActivity
         initDistractionFreeMode(savedInstanceState);
 
         setContentView(R.layout.folio_activity);
+
         this.savedInstanceState = savedInstanceState;
 
         if (savedInstanceState != null) {
@@ -437,6 +439,10 @@ public class FolioActivity
         }
     }
 
+    /**
+     * read book file and create server serve book content
+     * @throws Exception
+     */
     private void initBook() throws Exception {
         Log.v(LOG_TAG, "-> initBook");
 
@@ -474,6 +480,9 @@ public class FolioActivity
         //TODO -> Fail gracefully
     }
 
+    /**
+     * correct book id, init spine and search uri
+     */
     public void onBookInitSuccess() {
 
         Publication publication = pubBox.getPublication();
@@ -518,6 +527,8 @@ public class FolioActivity
         mFolioPageViewPager.setDirection(newDirection);
         mFolioPageFragmentAdapter = new FolioPageFragmentAdapter(getSupportFragmentManager(),
                 spine, bookFileName, mBookId);
+        FolioPageViewAdapter adapter = new FolioPageViewAdapter(this, spine, bookFileName, mBookId);
+        adapter.setActivityCallback(this);
         mFolioPageViewPager.setAdapter(mFolioPageFragmentAdapter);
         mFolioPageViewPager.setCurrentItem(currentChapterIndex);
 
@@ -839,8 +850,12 @@ public class FolioActivity
         });
 
         mFolioPageViewPager.setDirection(direction);
+
         mFolioPageFragmentAdapter = new FolioPageFragmentAdapter(getSupportFragmentManager(),
                 spine, bookFileName, mBookId);
+        FolioPageViewAdapter adapter = new FolioPageViewAdapter(this, spine, bookFileName, mBookId);
+        adapter.setActivityCallback(this);
+
         mFolioPageViewPager.setAdapter(mFolioPageFragmentAdapter);
 
         // In case if SearchActivity is recreated due to screen rotation then FolioActivity

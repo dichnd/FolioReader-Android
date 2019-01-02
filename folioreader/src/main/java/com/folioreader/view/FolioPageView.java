@@ -915,4 +915,9 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
     public void triggerHighlight(@NotNull Rect rect) {
         //TODO
     }
+
+    public void deleteHighlight() {
+        mWebview.loadUrl("javascript:clearSelection()");
+        mWebview.loadUrl("javascript:deleteThisHighlight()");
+    }
 }

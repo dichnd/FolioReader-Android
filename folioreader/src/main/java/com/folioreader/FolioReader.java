@@ -19,6 +19,7 @@ import com.folioreader.ui.folio.activity.FolioActivity;
 import com.folioreader.util.OnHighlightListener;
 import com.folioreader.util.ReadPositionListener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,6 +38,7 @@ public class FolioReader {
     private ReadPositionListener readPositionListener;
     private OnClosedListener onClosedListener;
     private ReadPosition readPosition;
+    private ArrayList<OnHighlightListener> onHighlightListeners = new ArrayList<>();
     public static final String ACTION_SAVE_READ_POSITION = "com.folioreader.action.SAVE_READ_POSITION";
     public static final String ACTION_CLOSE_FOLIOREADER = "com.folioreader.action.CLOSE_FOLIOREADER";
     public static final String ACTION_FOLIOREADER_CLOSED = "com.folioreader.action.FOLIOREADER_CLOSED";
@@ -57,17 +59,28 @@ public class FolioReader {
         public void onReceive(Context context, Intent intent) {
             HighLight.HighLightAction action = (HighLight.HighLightAction)
                     intent.getSerializableExtra(HighLight.HighLightAction.class.getName());
-            Log.d("FolioReader", "444 123 Context hashcode " + context.hashCode() + "  " + action.name());
             if (action == HighLight.HighLightAction.TRIGGER) {
-                Log.d("FolioReader", "Context hashcode 55555555555555");
                 Rect rect = intent.getParcelableExtra("rect");
-                Log.d("FolioReader", "" + (onHighlightListener == null));
-                Log.d("FolioReader", onHighlightListener.toString());
-                onHighlightListener.onTriggerHighlight(rect);
+                String highlightId = intent.getStringExtra("id");
+                for (OnHighlightListener listener : onHighlightListeners) {
+                    listener.onTriggerHighlight(rect, highlightId);
+                }
+            } else if (action == HighLight.HighLightAction.DISMISS_POPUP) {
+                for (OnHighlightListener listener : onHighlightListeners) {
+                    listener.onDismissPopup();
+                }
+            } else if (action == HighLight.HighLightAction.DELETE) {
+                HighlightImpl highlightImpl = intent.getParcelableExtra(HighlightImpl.INTENT);
+                for (OnHighlightListener listener : onHighlightListeners) {
+                    listener.onDeleteHighlight(highlightImpl);
+                }
             } else {
                 HighlightImpl highlightImpl = intent.getParcelableExtra(HighlightImpl.INTENT);
                 if (onHighlightListener != null && highlightImpl != null && action != null) {
-                    onHighlightListener.onHighlight(highlightImpl, action);
+                    for (OnHighlightListener listener : onHighlightListeners) {
+                        listener.onHighlight(highlightImpl, action);
+                    }
+//                    onHighlightListener.onHighlight(highlightImpl, action);
                 }
             }
         }
@@ -216,6 +229,12 @@ public class FolioReader {
     public FolioReader setOnHighlightListener(OnHighlightListener onHighlightListener) {
         Log.d("FolioReader", "setOnHighlightListener: " + onHighlightListener.toString());
         this.onHighlightListener = onHighlightListener;
+        this.onHighlightListeners.add(onHighlightListener);
+        return singleton;
+    }
+
+    public FolioReader addOnHighlightListener(OnHighlightListener onHighlightListener) {
+        this.onHighlightListeners.add(onHighlightListener);
         return singleton;
     }
 

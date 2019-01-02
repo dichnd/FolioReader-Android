@@ -121,11 +121,19 @@ public class HighlightUtil {
                 getHighlightBroadcastIntent(highlightImpl, action));
     }
 
-    public static void sendHighlightTriggerAt(Context context, Rect rect) {
+    public static void sendHighlightTriggerAt(Context context, Rect rect, String highlightId) {
         Log.d("FolioReader", "111 Context hashcode " + context.hashCode());
         Bundle bundle = new Bundle();
         bundle.putSerializable(HighLight.HighLightAction.class.getName(), HighLight.HighLightAction.TRIGGER);
         bundle.putParcelable("rect", rect);
+        bundle.putString("id", highlightId);
+        Intent intent = new Intent(HighlightImpl.BROADCAST_EVENT).putExtras(bundle);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
+
+    public static void sendHighlightBroadcastAction(Context context, HighLight.HighLightAction action) {
+        Bundle bundle = new Bundle();
+        bundle.putSerializable(HighLight.HighLightAction.class.getName(), action);
         Intent intent = new Intent(HighlightImpl.BROADCAST_EVENT).putExtras(bundle);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
