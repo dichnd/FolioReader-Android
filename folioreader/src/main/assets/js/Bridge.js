@@ -1165,6 +1165,7 @@ function onClickHtml() {
     } else {
         FolioWebView.toggleSystemUI();
     }
+    FolioWebView.onClickHtml();
 }
 
 // onClick method set for highlights

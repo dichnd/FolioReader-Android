@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
@@ -70,7 +71,7 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class FolioPageView extends FrameLayout implements MediaControllerCallbacks, HtmlTaskCallback, FolioWebView.SeekBarListener, FolioBookHolder {
-    public static final String LOG_TAG = FolioPageFragment.class.getSimpleName();
+    public static final String LOG_TAG = FolioPageView.class.getSimpleName();
     public static final String KEY_FRAGMENT_FOLIO_POSITION = "com.folioreader.ui.folio.fragment.FolioPageFragment.POSITION";
     public static final String KEY_FRAGMENT_FOLIO_BOOK_TITLE = "com.folioreader.ui.folio.fragment.FolioPageFragment.BOOK_TITLE";
     public static final String KEY_FRAGMENT_EPUB_FILE_NAME = "com.folioreader.ui.folio.fragment.FolioPageFragment.EPUB_FILE_NAME";
@@ -169,9 +170,11 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
         spineItem = (Link) getArguments().getSerializable(SPINE_ITEM);
         mBookId = getArguments().getString(FolioReader.INTENT_BOOK_ID);
 
-        if (savedInstanceState != null) {
-            searchItemVisible = savedInstanceState.getParcelable(BUNDLE_SEARCH_ITEM);
-        }
+        Log.d(LOG_TAG, "initView " + mPosition);
+
+//        if (savedInstanceState != null) {
+//            searchItemVisible = savedInstanceState.getParcelable(BUNDLE_SEARCH_ITEM);
+//        }
 
         if (spineItem != null) {
             // SMIL Parsing not yet implemented in r2-streamer-kotlin
@@ -179,8 +182,8 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
             //    mediaController = new MediaController(getActivity(), MediaController.MediaType.SMIL, this);
             //    hasMediaOverlay = true;
             //} else {
-            mediaController = new MediaController(getContext(), MediaController.MediaType.TTS, this);
-            mediaController.setTextToSpeech(getContext());
+//            mediaController = new MediaController(getContext(), MediaController.MediaType.TTS, this);
+//            mediaController.setTextToSpeech(getContext());
             //}
         }
         highlightStyle = HighlightImpl.HighlightStyle.classForStyle(HighlightImpl.HighlightStyle.Normal);
@@ -410,10 +413,10 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
 
         @Override
         public void onPageFinished(WebView view, String url) {
-
+            Log.v(LOG_TAG, "onPageFinished");
             mWebview.loadUrl("javascript:getCompatMode()");
-            mWebview.loadUrl("javascript:alert(getReadingTime())");
-
+//            mWebview.loadUrl("javascript:alert(getReadingTime())");
+//
             if (!hasMediaOverlay)
                 mWebview.loadUrl("javascript:wrappingSentencesWithinPTags()");
 
@@ -438,23 +441,18 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
                             escapedSearchQuery, searchItemVisible.getOccurrenceInChapter());
                     mWebview.loadUrl(call);
 
-                } else {
+                } else if (isCurrentPage()) {
                     mWebview.loadUrl(String.format("javascript:scrollToSpan(%b, %s)",
                             lastReadPosition.isUsingId(), lastReadPosition.getValue()));
+                } else {
+                    if (mPosition == mActivityCallback.getCurrentChapterIndex() - 1) {
+                        // Scroll to last, the page before current page
+                        mWebview.loadUrl("javascript:scrollToLast()");
+                    } else {
+                        // Make loading view invisible for all other fragments
+                        loadingView.hide();
+                    }
                 }
-
-//                else if (isCurrentFragment()) {
-//                    mWebview.loadUrl(String.format("javascript:scrollToSpan(%b, %s)",
-//                            lastReadPosition.isUsingId(), lastReadPosition.getValue()));
-//                } else {
-//                    if (mPosition == mActivityCallback.getCurrentChapterIndex() - 1) {
-//                        // Scroll to last, the page before current page
-//                        mWebview.loadUrl("javascript:scrollToLast()");
-//                    } else {
-//                        // Make loading view invisible for all other fragments
-//                        loadingView.hide();
-//                    }
-//                }
 
                 mIsPageReloaded = false;
 
@@ -473,18 +471,9 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
                         escapedSearchQuery, searchItemVisible.getOccurrenceInChapter());
                 mWebview.loadUrl(call);
 
-            } else if (true /*isCurrentFragment()*/) {
+            } else if (isCurrentPage()) {
 
-                ReadPosition readPosition;
-                if (savedInstanceState == null) {
-                    Log.v(LOG_TAG, "-> onPageFinished -> took from getEntryReadPosition");
-                    readPosition = mActivityCallback.getEntryReadPosition();
-                } else {
-                    Log.v(LOG_TAG, "-> onPageFinished -> took from bundle");
-                    readPosition = savedInstanceState.getParcelable(BUNDLE_READ_POSITION_CONFIG_CHANGE);
-                    savedInstanceState.remove(BUNDLE_READ_POSITION_CONFIG_CHANGE);
-                }
-
+                ReadPosition readPosition = mActivityCallback.getEntryReadPosition();
                 if (readPosition != null) {
                     Log.v(LOG_TAG, "-> scrollToSpan -> " + readPosition.getValue());
                     mWebview.loadUrl(String.format("javascript:scrollToSpan(%b, %s)",
@@ -581,7 +570,7 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
         public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
 
             // This if block can be dropped
-            if (!FolioPageView.this.isShown())
+            if (!FolioPageView.this.isCurrentPage())
                 return true;
 
             if (TextUtils.isDigitsOnly(message)) {
@@ -656,6 +645,20 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
         }
     }
 
+    public void scrollToHighlightId(String highlightId) {
+        this.highlightId = highlightId;
+
+        if (loadingView != null && loadingView.getVisibility() != View.VISIBLE) {
+            loadingView.show();
+            mWebview.loadUrl(String.format(getContext().getResources().getString(R.string.go_to_highlight), highlightId));
+            this.highlightId = null;
+        }
+    }
+
+    public void setLastReadPosition(ReadPosition readPosition) {
+        lastReadPosition = readPosition;
+    }
+
     /**
      * Calls the /assets/js/Bridge.js#getFirstVisibleSpan(boolean)
      */
@@ -678,12 +681,12 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
     }
 
     public void onStop() {
-        Log.v(LOG_TAG, "-> onStop -> " + spineItem.getHref() + " -> " + isShown());
+        Log.v(LOG_TAG, "-> onStop -> " + spineItem.getHref() + " -> " + isCurrentPage());
 
-        mediaController.stop();
+//        mediaController.stop();
         //TODO save last media overlay item
 
-        if (isShown())
+        if (isCurrentPage())
             getLastReadPosition();
     }
 
@@ -730,6 +733,13 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
     @SuppressWarnings("unused")
     @JavascriptInterface
     public void storeFirstVisibleSpan(boolean usingId, String value) {
+        Log.v(LOG_TAG, "storeFirstVisibleSpan " + usingId + "  " + value);
+        lastReadPosition = new ReadPositionImpl(mBookId, spineItem.getHref(), usingId, value);
+        Log.v(LOG_TAG, lastReadPosition.toJson());
+        SharedPreferences mSharePref = getContext().getSharedPreferences("folioreader", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = mSharePref.edit();
+        editor.putString("last_read_pos_" + mBookId, lastReadPosition.toJson());
+        editor.commit();
 
         synchronized (this) {
             lastReadPosition = new ReadPositionImpl(mBookId, spineItem.getHref(), usingId, value);
@@ -806,10 +816,10 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
     @SuppressWarnings("unused")
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void pauseButtonClicked(MediaOverlayPlayPauseEvent event) {
-        if (isShown()
-                && spineItem.getHref().equals(event.getHref())) {
-            mediaController.stateChanged(event);
-        }
+//        if (isShown()
+//                && spineItem.getHref().equals(event.getHref())) {
+//            mediaController.stateChanged(event);
+//        }
     }
 
     /**
@@ -867,7 +877,7 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void reload(ReloadDataEvent reloadDataEvent) {
 
-        if (isShown())
+        if (isCurrentPage())
             getLastReadPosition();
 
         if (isShown()) {
@@ -901,7 +911,7 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
     @SuppressWarnings("unused")
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void resetCurrentIndex(RewindIndexEvent resetIndex) {
-        if (isShown()) {
+        if (isCurrentPage()) {
             mWebview.loadUrl("javascript:rewindCurrentIndex()");
         }
     }
@@ -919,5 +929,9 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
     public void deleteHighlight() {
         mWebview.loadUrl("javascript:clearSelection()");
         mWebview.loadUrl("javascript:deleteThisHighlight()");
+    }
+
+    private boolean isCurrentPage() {
+        return mPosition == mActivityCallback.getCurrentChapterIndex();
     }
 }

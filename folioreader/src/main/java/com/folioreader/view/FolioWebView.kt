@@ -133,6 +133,13 @@ class FolioWebView : WebView {
         return popupWindow.isShowing
     }
 
+    @JavascriptInterface
+    fun onClickHtml() {
+      uiHandler.post {
+        folioActivityCallback.onClickHtml()
+      }
+    }
+
     private inner class HorizontalGestureListener : GestureDetector.SimpleOnGestureListener() {
 
         override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
@@ -652,7 +659,7 @@ class FolioWebView : WebView {
         }
         Log.i(LOG_TAG, "-> currentSelectionRect intersects viewportRect")
 
-        if (selectionRect == currentSelectionRect) {
+        if (selectionRect == currentSelectionRect && folioBookHolder.showMenu()) {
             Log.i(LOG_TAG, "-> setSelectionRect -> currentSelectionRect is equal to previous " +
                     "selectionRect so no need to computeTextSelectionRect and show popupWindow again")
             return

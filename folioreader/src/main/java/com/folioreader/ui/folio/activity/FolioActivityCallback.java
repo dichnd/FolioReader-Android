@@ -34,4 +34,6 @@ public interface FolioActivityCallback {
     Rect getViewportRect();
 
     WeakReference<FolioActivity> getActivity();
+
+    void onClickHtml();
 }
