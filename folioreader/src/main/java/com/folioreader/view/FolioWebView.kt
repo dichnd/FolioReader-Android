@@ -86,7 +86,7 @@ class FolioWebView : WebView {
     private var eventActionDown: MotionEvent? = null
     private var pageWidthCssDp: Int = 0
     private var pageWidthCssPixels: Float = 0.toFloat()
-    private lateinit var webViewPager: WebViewPager
+    private var webViewPager: WebViewPager? = null
     private lateinit var uiHandler: Handler
     private lateinit var folioActivityCallback: FolioActivityCallback
 //    private lateinit var parentFragment: FolioPageFragment
@@ -151,7 +151,7 @@ class FolioWebView : WebView {
         override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
             //Log.d(LOG_TAG, "-> onFling -> e1 = " + e1 + ", e2 = " + e2 + ", velocityX = " + velocityX + ", velocityY = " + velocityY);
 
-            if (!webViewPager.isScrolling) {
+            if (!(webViewPager?.isScrolling ?: true)) {
                 // Need to complete the scroll as ViewPager thinks these touch events should not
                 // scroll it's pages.
                 //Log.d(LOG_TAG, "-> onFling -> completing scroll");
@@ -404,9 +404,13 @@ class FolioWebView : WebView {
     private fun computeHorizontalScroll(event: MotionEvent): Boolean {
         //Log.v(LOG_TAG, "-> computeHorizontalScroll");
 
-        webViewPager.dispatchTouchEvent(event)
-        val gestureReturn = gestureDetector.onTouchEvent(event)
-        return if (gestureReturn) true else super.onTouchEvent(event)
+        if (webViewPager != null) {
+            webViewPager?.dispatchTouchEvent(event)
+            val gestureReturn = gestureDetector.onTouchEvent(event)
+            return if (gestureReturn) true else super.onTouchEvent(event)
+        } else {
+            return true
+        }
     }
 
     fun getScrollXDpForPage(page: Int): Int {
@@ -424,7 +428,7 @@ class FolioWebView : WebView {
 
         uiHandler.post {
             webViewPager = (parent as View).findViewById(R.id.webViewPager)
-            webViewPager.setHorizontalPageCount(this@FolioWebView.horizontalPageCount)
+            webViewPager?.setHorizontalPageCount(this@FolioWebView.horizontalPageCount)
         }
     }
 
@@ -641,6 +645,11 @@ class FolioWebView : WebView {
         Log.d(LOG_TAG, "-> setSelectionRect -> $currentSelectionRect")
 
         computeTextSelectionRect(currentSelectionRect)
+    }
+
+    @JavascriptInterface
+    fun onMarkerClick(globalId: String) {
+        folioActivityCallback.onMarkerClick(globalId)
     }
 
     private fun computeTextSelectionRect(currentSelectionRect: Rect) {

@@ -211,7 +211,7 @@
 
         /*----------------------------------------------------------------------------------------------------------------*/
 
-        function Highlight(doc, characterRange, classApplier, converter, id, containerElementId) {
+        function Highlight(doc, characterRange, classApplier, converter, id, containerElementId, serializedHighlight) {
             if (id) {
                 this.id = id;
                 nextHighlightId = Math.max(nextHighlightId, id + 1);
@@ -224,6 +224,7 @@
             this.converter = converter;
             this.containerElementId = containerElementId || null;
             this.applied = false;
+            this.serializedHighlight = serializedHighlight
         }
 
         Highlight.prototype = {
@@ -252,9 +253,14 @@
                 this.applied = false;
             },
 
-            apply: function(serializedHighlight) {
-                this.classApplier.applyToRange(this.getRange() ,null, serializedHighlight);
+            apply: function() {
+                this.classApplier.applyToRange(this.getRange() ,null, this.serializedHighlight);
                 this.applied = true;
+            },
+
+            addMarker: function(globalId) {
+              this.classApplier.applyMarker(this.getRange() ,null, this.serializedHighlight, globalId);
+              this.applied = true;
             },
 
             getHighlightElements: function() {
@@ -606,13 +612,30 @@
                         throw new Error("No class applier found for class '" + parts[3] + "'");
                     }
 
-                    highlight = new Highlight(this.doc, characterRange, classApplier, this.converter, parseInt(parts[2]), containerElementId);
+                    highlight = new Highlight(this.doc, characterRange, classApplier, this.converter, parseInt(parts[2]), containerElementId, serializedHighlights[i]);
 
 
-                    highlight.apply(serializedHighlights[i]);
+                    // highlight.apply(serializedHighlights[i]);
+                    // highlight.addMarker(serializedHighlights[i]);
                     highlights.push(highlight);
                 }
                 this.highlights = highlights;
+                return highlights;
+            },
+
+            deserializeAndApply: function(serialized) {
+                var highlights = this.deserialize(serialized)
+                forEach(highlights, function(highlight) {
+                  highlight.apply();
+                })
+            },
+
+            deserializeAndMark: function(serialized, serializedGlobalIds) {
+              var highlights = this.deserialize(serialized)
+              var globalIds = serializedGlobalIds.split("|")
+              forEach(highlights, function(highlight, index) {
+                highlight.addMarker(globalIds[index])
+              })
             }
         };
 

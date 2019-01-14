@@ -500,8 +500,16 @@ $(function(){
 
     setHighlights: function(serializedHighlight){
       try {
+        console.log("setHighlights: " + serializedHighlight)
         this.highlighter.removeAllHighlights();
-        this.highlighter.deserialize(serializedHighlight);
+        this.highlighter.deserializeAndApply(serializedHighlight);
+      } catch(err){}
+    },
+
+    markHighlight: function(serializedHighlight, serializedGlobalIds) {
+      try {
+        console.log("markHighlight: " + serializedHighlight + " " + serializedGlobalIds)
+        this.highlighter.deserializeAndMark(serializedHighlight, serializedGlobalIds);
       } catch(err){}
     },
 
@@ -1174,6 +1182,14 @@ function onClickHighlight(element) {
     event.stopPropagation();
     thisHighlight = element;
     getSelectionRect(element);
+}
+
+function onMarkerClick(element) {
+    console.log("-> onMarkerClick")
+    event.stopPropagation();
+    if (element !== undefined) {
+        FolioWebView.onMarkerClick(element.id);
+    }
 }
 
 function deleteThisHighlight() {

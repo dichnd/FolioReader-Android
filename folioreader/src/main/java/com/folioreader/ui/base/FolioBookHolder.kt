@@ -8,7 +8,8 @@ interface FolioBookHolder {
     fun getCurrentHref(): String
     fun highlight(style: HighlightImpl.HighlightStyle, isAlreadyCreated: Boolean)
     fun getPageName(): String
-    fun loadRangy(rangy: String);
+    fun loadRangy(rangy: String)
+    fun loadMarker(rangy: String, globalIds: String)
     fun setSearchItemVisible(item: SearchItem?)
     fun showMenu(): Boolean {
         return true

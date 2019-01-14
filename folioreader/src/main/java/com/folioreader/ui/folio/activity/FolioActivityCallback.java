@@ -36,4 +36,6 @@ public interface FolioActivityCallback {
     WeakReference<FolioActivity> getActivity();
 
     void onClickHtml();
+
+    void onMarkerClick(String id);
 }

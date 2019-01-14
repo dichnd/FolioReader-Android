@@ -132,6 +132,8 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
     public SearchItem searchItemVisible;
     private Handler handler;
     private Bundle arguments;
+    private boolean mIsPageLoaded = false;
+    private String mMarkerInfo;
 
     public static FolioPageView newInstance(Context context, int position, String bookTitle, Link spineRef, String bookId, FolioActivityCallback cb) {
         Bundle args = new Bundle();
@@ -328,6 +330,12 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
     }
 
     @Override
+    public void loadMarker(@NotNull String rangy, @NotNull String globalIds) {
+        if (mIsPageLoaded) mWebview.loadUrl(String.format("javascript:if(typeof ssReader !== \"undefined\"){ssReader.markHighlight('%s', '%s');}", rangy, globalIds));
+        else mMarkerInfo = rangy + "@@" + globalIds;
+    }
+
+    @Override
     public void setSearchItemVisible(SearchItem item) {
         searchItemVisible = item;
     }
@@ -413,7 +421,9 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
 
         @Override
         public void onPageFinished(WebView view, String url) {
-            Log.v(LOG_TAG, "onPageFinished");
+            Log.d(LOG_TAG, "onPageFinished");
+
+            mIsPageLoaded = true;
             mWebview.loadUrl("javascript:getCompatMode()");
 //            mWebview.loadUrl("javascript:alert(getReadingTime())");
 //
@@ -431,6 +441,12 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
             FolioPageView.this.rangy = rangy;
             if (!rangy.isEmpty())
                 loadRangy(rangy);
+
+            if (mMarkerInfo != null) {
+                String[] infos = mMarkerInfo.split("@@");
+                loadMarker(infos[0], infos[1]);
+                mMarkerInfo = null;
+            }
 
             if (mIsPageReloaded) {
 
@@ -601,7 +617,7 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
             mConfig = AppUtil.getSavedConfig(getContext());
 
             String href = spineItem.getHref();
-            String path;
+            final String path;
             int forwardSlashLastIndex = href.lastIndexOf('/');
             if (forwardSlashLastIndex != -1) {
                 path = href.substring(0, forwardSlashLastIndex + 1);
@@ -609,7 +625,7 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
                 path = "/";
             }
 
-            String mimeType;
+            final String mimeType;
             if (spineItem.getTypeLink().equalsIgnoreCase(getContext().getResources().getString(R.string.xhtml_mime_type))) {
                 mimeType = getContext().getResources().getString(R.string.xhtml_mime_type);
             } else {

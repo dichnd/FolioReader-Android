@@ -708,6 +708,11 @@ public class FolioPageFragment
     }
 
     @Override
+    public void loadMarker(@NotNull String rangy, @NotNull String globalIds) {
+        mWebview.loadUrl(String.format("javascript:if(typeof ssReader !== \"undefined\"){ssReader.markHighlight('%s', '%s');}", rangy, globalIds));
+    }
+
+    @Override
     public void setSearchItemVisible(SearchItem item) {
         searchItemVisible = item;
     }

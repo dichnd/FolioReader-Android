@@ -820,6 +820,17 @@
 
             },
 
+            applyMarkerToTextNode: function(textNode, positionsToPreserve, serializedHighlight, globalId) {
+                var rect = textNode.parentNode.getBoundingClientRect()
+                var marker = document.createElement("span")
+                marker.setAttribute("id", globalId);
+                marker.setAttribute("onclick", "onMarkerClick(this)");
+                var styleText = 'width: 48px; height: 48px; position: absolute; top: ' + (rect.top + "px;") + ' left: ' +
+                  (Math.ceil(rect.left / document.documentElement.clientWidth) *  document.documentElement.clientWidth - 50) + "px; " +
+                  '-webkit-transform: scaleX(-1); transform: scaleX(-1); background-image: url(file:///android_asset/img/marker.png)'
+                marker.style.cssText = styleText
+                document.body.appendChild(marker)
+            },
             isRemovable: function(el) {
                 return el.tagName.toLowerCase() == this.elementTagName &&
                     getSortedClassName(el) == this.elementSortedClassName &&
@@ -932,6 +943,28 @@
                 });
             },
 
+            applyMarker: function(range, rangesToPreserve, serializedHighlight, globalId) {
+                console.log("applyMarker")
+                console.log(range);
+                var applier = this;
+                rangesToPreserve = rangesToPreserve || [];
+
+                // Create an array of range boundaries to preserve
+                var positionsToPreserve = getRangeBoundaries(rangesToPreserve || []);
+
+                range.splitBoundariesPreservingPositions(positionsToPreserve);
+
+                // Tidy up the DOM by removing empty containers
+                if (applier.removeEmptyElements) {
+                    applier.removeEmptyContainers(range);
+                }
+
+                var textNodes = getEffectiveTextNodes(range);
+                if (textNodes.length) {
+                  applier.applyMarkerToTextNode(textNodes[0], globalId)
+                }
+            },
+
             applyToRanges: function(ranges) {
 
                 var i = ranges.length;
@@ -942,6 +975,18 @@
 
 
                 return ranges;
+            },
+
+            applyMarkers: function(ranges) {
+
+              var i = ranges.length;
+              while (i--) {
+                  this.applyMarker(ranges[i], ranges);
+                  //Highlight.printData("**ranges"+ranges[i]);
+              }
+
+
+              return ranges;
             },
 
             applyToSelection: function(win) {
