@@ -634,6 +634,11 @@ public class FolioActivity
     }
 
     @Override
+    public void onMarkerClick(String id) {
+        //TODO
+    }
+
+    @Override
     public void onSystemUiVisibilityChange(int visibility) {
         Log.v(LOG_TAG, "-> onSystemUiVisibilityChange -> visibility = " + visibility);
 

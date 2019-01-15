@@ -961,7 +961,7 @@
 
                 var textNodes = getEffectiveTextNodes(range);
                 if (textNodes.length) {
-                  applier.applyMarkerToTextNode(textNodes[0], globalId)
+                  applier.applyMarkerToTextNode(textNodes[0], rangesToPreserve, serializedHighlight, globalId)
                 }
             },
 

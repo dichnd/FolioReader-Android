@@ -238,6 +238,11 @@ public class FolioReader {
         return singleton;
     }
 
+    public FolioReader removeOnHighlightListener(OnHighlightListener onHighlightListener) {
+        this.onHighlightListeners.remove(onHighlightListener);
+        return singleton;
+    }
+
     public FolioReader setReadPositionListener(ReadPositionListener readPositionListener) {
         this.readPositionListener = readPositionListener;
         return singleton;

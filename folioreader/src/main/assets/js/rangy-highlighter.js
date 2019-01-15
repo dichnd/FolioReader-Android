@@ -633,7 +633,7 @@
             deserializeAndMark: function(serialized, serializedGlobalIds) {
               var highlights = this.deserialize(serialized)
               var globalIds = serializedGlobalIds.split("|")
-              forEach(highlights, function(highlight, index) {
+              highlights.forEach(function(highlight, index) {
                 highlight.addMarker(globalIds[index])
               })
             }

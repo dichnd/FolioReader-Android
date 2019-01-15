@@ -71,11 +71,12 @@ public class HighlightUtil {
      */
     private static String getRangyString(String rangy, String oldRangy) {
         List<String> rangyList = getRangyArray(rangy);
-        for (String firs : getRangyArray(oldRangy)) {
-            if (rangyList.contains(firs)) {
-                rangyList.remove(firs);
-            }
-        }
+        rangyList.removeAll(getRangyArray(oldRangy));
+//        for (String firs : getRangyArray(oldRangy)) {
+//            if (rangyList.contains(firs)) {
+//                rangyList.remove(firs);
+//            }
+//        }
         if (rangyList.size() >= 1) {
             return rangyList.get(0);
         } else {
