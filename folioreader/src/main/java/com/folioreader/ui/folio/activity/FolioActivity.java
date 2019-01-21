@@ -639,6 +639,11 @@ public class FolioActivity
     }
 
     @Override
+    public void highlightTriggerAt(Rect rect, String highlightId, String gid, int style) {
+        //TODO
+    }
+
+    @Override
     public void onSystemUiVisibilityChange(int visibility) {
         Log.v(LOG_TAG, "-> onSystemUiVisibilityChange -> visibility = " + visibility);
 

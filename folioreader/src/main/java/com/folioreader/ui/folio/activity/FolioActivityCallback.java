@@ -3,6 +3,7 @@ package com.folioreader.ui.folio.activity;
 import android.graphics.Rect;
 
 import com.folioreader.Config;
+import com.folioreader.model.HighlightImpl;
 import com.folioreader.model.ReadPosition;
 
 import java.lang.ref.WeakReference;
@@ -38,4 +39,6 @@ public interface FolioActivityCallback {
     void onClickHtml();
 
     void onMarkerClick(String id);
+
+    void highlightTriggerAt(Rect rect, String highlightId, String gid, int style);
 }

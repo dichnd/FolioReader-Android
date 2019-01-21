@@ -498,11 +498,11 @@ $(function(){
       } catch(err){}
     },
 
-    setHighlights: function(serializedHighlight){
+    setHighlights: function(serializedHighlight, serializedGlobalIds){
       try {
         console.log("setHighlights: " + serializedHighlight)
         this.highlighter.removeAllHighlights();
-        this.highlighter.deserializeAndApply(serializedHighlight);
+        this.highlighter.deserializeAndApply(serializedHighlight, serializedGlobalIds);
       } catch(err){}
     },
 
@@ -532,6 +532,30 @@ $(function(){
     search: function(){
       SSBridge.onSearch(window.getSelection().toString());
       this.clearSelection();
+    },
+
+    goToRangy: function(rangy) {
+        console.log("---goToRangy---" + rangy);
+        var element = this.highlighter.getElementFromRangy(rangy);
+        console.log(element);
+        if (element) scrollToElement(element);
+        LoadingView.hide();
+    },
+
+    deleteHighlight: function(highlightId) {
+        this.highlighter.removeHighlightByIds([highlightId])
+    },
+
+    removeMarker: function(globalId) {
+        this.highlighter.removeMarker(globalId)
+    },
+
+    updateHighlightStyle: function(highlightId, style) {
+      this.highlighter.updateHighlightStyle(highlightId, style)
+    },
+
+    updateHighlightGlobalId: function(highlightId, globalId) {
+      this.highlighter.updateHighlightGlobalId(highlightId, globalId)
     }
   });
 
@@ -773,6 +797,7 @@ function scrollToFirst() {
 }
 
 function getCompatMode() {
+    console.log("Folio: getCompatMode");
     FolioWebView.setCompatMode(document.compatMode);
 }
 
@@ -801,7 +826,7 @@ function horizontalRecheck() {
 }
 
 function initHorizontalDirection() {
-
+    console.log("Folio: initHorizontalDirection");
     preInitHorizontalDirection();
     postInitHorizontalDirection();
 
@@ -809,7 +834,7 @@ function initHorizontalDirection() {
 }
 
 function preInitHorizontalDirection() {
-
+    console.log("Folio: preInitHorizontalDirection");
     //console.log(window);
     //console.log("-> " + document.getElementsByTagName('title')[0].innerText);
     var htmlElement = document.getElementsByTagName('html')[0];
@@ -851,6 +876,7 @@ function preInitHorizontalDirection() {
 }
 
 function postInitHorizontalDirection() {
+    console.log("Folio: postInitHorizontalDirection");
 
     var htmlElement = document.getElementsByTagName('html')[0];
     var bodyElement = document.getElementsByTagName('body')[0];
@@ -882,9 +908,9 @@ function postInitHorizontalDirection() {
             + ", Something wrong in pageCount calculation");
     }
 
-    //console.log("-> scrollWidth = " + scrollWidth);
-    //console.log("-> newBodyWidth = " + newBodyWidth);
-    //console.log("-> pageCount = " + pageCount);
+    console.log("-> scrollWidth = " + scrollWidth);
+    console.log("-> newBodyWidth = " + newBodyWidth);
+    console.log("-> pageCount = " + pageCount);
 
     FolioPageFragment.setHorizontalPageCount(pageCount);
 }
@@ -901,7 +927,6 @@ function bodyOrHtml() {
 }
 
 function scrollToElement(element) {
-
     var scrollingElement = bodyOrHtml();
 
     if (FolioPageFragment.getDirection() == "VERTICAL") {
@@ -930,11 +955,12 @@ function scrollToElement(element) {
         }
 
     } else if (FolioPageFragment.getDirection() == "HORIZONTAL") {
-
         var clientWidth = document.documentElement.clientWidth;
+        console.log("scrollToElement--" + clientWidth + " -- " + element.offsetLeft)
+        console.log(element.offsetLeft / clientWidth)
         var pageIndex = Math.floor(element.offsetLeft / clientWidth);
         var newScrollLeft = clientWidth * pageIndex;
-        //console.log("-> newScrollLeft = " + newScrollLeft);
+        console.log("-> newScrollLeft = " + newScrollLeft);
         scrollingElement.scrollLeft = newScrollLeft;
         WebViewPager.setCurrentPage(pageIndex);
     }
@@ -1147,9 +1173,17 @@ function getSelectionRect(element) {
     console.log("-> getSelectionRect");
 
     var highlightId = null;
+    var gid = null;
+    var style = 0;
     var range;
     if (element !== undefined) {
         highlightId = element.id;
+        gid = element.getAttribute("gid");
+        style = ['highlight_yellow', 'highlight_green', 'highlight_blue', 'highlight_pink'].findIndex(function(s) {
+            return element.className.includes(s)
+        })
+        console.log(element.className)
+        console.log(style)
         range = document.createRange();
         range.selectNodeContents(element);
     } else {
@@ -1158,7 +1192,7 @@ function getSelectionRect(element) {
 
     //var rect = range.getBoundingClientRect();
     var rect = RangeFix.getBoundingClientRect(range);
-    FolioWebView.setSelectionRect(rect.left, rect.top, rect.right, rect.bottom, highlightId);
+    FolioWebView.setSelectionRect(rect.left, rect.top, rect.right, rect.bottom, highlightId, gid, style);
 }
 
 function clearSelection() {

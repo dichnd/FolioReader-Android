@@ -100,6 +100,7 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
     private String mAnchorId;
     private String rangy = "";
     private String highlightId;
+    private String rangyToScroll;
 
     private ReadPosition lastReadPosition;
     private Bundle outState;
@@ -134,6 +135,8 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
     private Bundle arguments;
     private boolean mIsPageLoaded = false;
     private String mMarkerInfo;
+    private String mHighlightToShow = null;
+    private boolean mIsLoadedMarker = false;
 
     public static FolioPageView newInstance(Context context, int position, String bookTitle, Link spineRef, String bookId, FolioActivityCallback cb) {
         Bundle args = new Bundle();
@@ -331,6 +334,7 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
 
     @Override
     public void loadMarker(@NotNull String rangy, @NotNull String globalIds) {
+        mIsLoadedMarker = true;
         if (mIsPageLoaded) mWebview.loadUrl(String.format("javascript:if(typeof ssReader !== \"undefined\"){ssReader.markHighlight('%s', '%s');}", rangy, globalIds));
         else mMarkerInfo = rangy + "@@" + globalIds;
     }
@@ -338,6 +342,31 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
     @Override
     public void setSearchItemVisible(SearchItem item) {
         searchItemVisible = item;
+    }
+
+    public boolean isLoadedMarker() {
+        return mIsLoadedMarker;
+    }
+
+    public void setIsLoadedMarker(boolean isLoadedMarker) {
+        this.mIsLoadedMarker = isLoadedMarker;
+    }
+
+    public void showHighlight(String rangy, String globalIds) {
+        if (mIsPageLoaded) {
+            this.rangy = rangy;
+            mWebview.loadUrl(String.format("javascript:if(typeof ssReader !== \"undefined\"){ssReader.setHighlights('%s', '%s');}", rangy, globalIds));
+        } else this.mHighlightToShow = rangy + "@@" + globalIds;
+    }
+
+    public void updateHighlightStyle(String highlightId, HighlightImpl.HighlightStyle style) {
+        mWebview.loadUrl(String.format("javascript:if(typeof ssReader !== \"undefined\"){ssReader.updateHighlightStyle('%s', '%s');}",
+                highlightId, HighlightImpl.HighlightStyle.classForStyle(style)));
+    }
+
+    public void updateHighlightGlobalId(String highlightId, String globalId) {
+        mWebview.loadUrl(String.format("javascript:if(typeof ssReader !== \"undefined\"){ssReader.updateHighlightGlobalId('%s', '%s');}",
+                highlightId, globalId));
     }
 
     public void fadeInSeekBarIfInvisible() {
@@ -437,10 +466,19 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
                     HighlightImpl.HighlightStyle.classForStyle(
                             HighlightImpl.HighlightStyle.Normal)));
 
-            String rangy = HighlightUtil.generateRangyString(getPageName());
-            FolioPageView.this.rangy = rangy;
-            if (!rangy.isEmpty())
-                loadRangy(rangy);
+            /*
+            load highlight from api instead of from local
+             */
+//            String rangy = HighlightUtil.generateRangyString(getPageName());
+//            FolioPageView.this.rangy = rangy;
+//            if (!rangy.isEmpty())
+//                loadRangy(rangy);
+
+            if (mHighlightToShow != null) {
+                String[] infos = mHighlightToShow.split("@@");
+                showHighlight(infos[0], infos[1]);
+                mHighlightToShow = null;
+            }
 
             if (mMarkerInfo != null) {
                 String[] infos = mMarkerInfo.split("@@");
@@ -479,6 +517,10 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
             } else if (!TextUtils.isEmpty(highlightId)) {
                 mWebview.loadUrl(String.format(getContext().getResources().getString(R.string.go_to_highlight), highlightId));
                 highlightId = null;
+
+            } else if (!TextUtils.isEmpty(rangyToScroll)) {
+                mWebview.loadUrl(String.format("javascript:if(typeof ssReader !== \"undefined\"){ssReader.goToRangy('%s');}", rangyToScroll));
+                rangyToScroll = null;
 
             } else if (searchItemVisible != null) {
                 String escapedSearchQuery = searchItemVisible.getSearchQuery()
@@ -671,6 +713,17 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
         }
     }
 
+    public void scrollToRangy(String rangy) {
+        Log.d(LOG_TAG, "scrollToRangy -- " + rangy);
+        this.rangyToScroll = rangy;
+
+        if (loadingView != null && loadingView.getVisibility() != View.VISIBLE) {
+            loadingView.show();
+            mWebview.loadUrl(String.format("javascript:if(typeof ssReader !== \"undefined\"){ssReader.goToRangy('%s');}", rangy));
+            this.rangyToScroll = null;
+        }
+    }
+
     public void setLastReadPosition(ReadPosition readPosition) {
         lastReadPosition = readPosition;
     }
@@ -791,22 +844,22 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
 
     @JavascriptInterface
     public void getUpdatedHighlightId(String id, String style) {
-        if (id != null) {
-            HighlightImpl highlightImpl = HighLightTable.updateHighlightStyle(id, style);
-            if (highlightImpl != null) {
-                HighlightUtil.sendHighlightBroadcastEvent(
-                        getContext().getApplicationContext(),
-                        highlightImpl,
-                        HighLight.HighLightAction.MODIFY);
-            }
-            final String rangyString = HighlightUtil.generateRangyString(getPageName());
-            handler.post(new Runnable() {
-                public void run() {
-                    loadRangy(rangyString);
-                }
-            });
-
-        }
+//        if (id != null) {
+//            HighlightImpl highlightImpl = HighLightTable.updateHighlightStyle(id, style);
+//            if (highlightImpl != null) {
+//                HighlightUtil.sendHighlightBroadcastEvent(
+//                        getContext().getApplicationContext(),
+//                        highlightImpl,
+//                        HighLight.HighLightAction.MODIFY);
+//            }
+//            final String rangyString = HighlightUtil.generateRangyString(getPageName());
+//            handler.post(new Runnable() {
+//                public void run() {
+//                    loadRangy(rangyString);
+//                }
+//            });
+//
+//        }
     }
 
     @Override
@@ -918,10 +971,10 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
     @SuppressWarnings("unused")
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void updateHighlight(UpdateHighlightEvent event) {
-        if (isShown()) {
-            this.rangy = HighlightUtil.generateRangyString(getPageName());
-            loadRangy(this.rangy);
-        }
+//        if (isShown()) {
+//            this.rangy = HighlightUtil.generateRangyString(getPageName());
+//            loadRangy(this.rangy);
+//        }
     }
 
     @SuppressWarnings("unused")
@@ -942,12 +995,36 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
         //TODO
     }
 
-    public void deleteHighlight() {
+    public void deleteHighlight(String highlightId, String globalId) {
         mWebview.loadUrl("javascript:clearSelection()");
-        mWebview.loadUrl("javascript:deleteThisHighlight()");
+        mWebview.loadUrl(String.format("javascript:if(typeof ssReader !== \"undefined\"){ssReader.deleteHighlight('%s');}", highlightId));
+        mWebview.loadUrl(String.format("javascript:if(typeof ssReader !== \"undefined\"){ssReader.removeMarker('%s');}", globalId));
     }
 
     private boolean isCurrentPage() {
         return mPosition == mActivityCallback.getCurrentChapterIndex();
     }
+
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event) {
+//        int count = webViewPager.getAdapter().getCount();
+//        int current = webViewPager.getCurrentItem();
+//        if (current < count - 1) {
+//            super.onTouchEvent(event);
+//            return true;
+//        } else return super.onTouchEvent(event);
+//    }
+//
+//    @Override
+//    public boolean onInterceptTouchEvent(MotionEvent ev) {
+//        Log.d(LOG_TAG, "-> onInterceptTouchEvent -> " + AppUtil.actionToString(ev.getAction()));
+//        Log.d(LOG_TAG, "onInterceptTouchEvent: spinItem: " + spineItem.getHref() + ": " + mIsPageLoaded);
+//        Log.d(LOG_TAG, "webViewPager child count: " + webViewPager.getAdapter().getCount());
+//        Log.d(LOG_TAG, "webViewPager current page: " + webViewPager.getCurrentItem());
+//        int count = webViewPager.getAdapter().getCount();
+//        int current = webViewPager.getCurrentItem();
+//        if (current < count - 1) {
+//            return true;
+//        } else return super.onInterceptTouchEvent(ev);
+//    }
 }

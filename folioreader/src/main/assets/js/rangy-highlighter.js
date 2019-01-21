@@ -253,14 +253,24 @@
                 this.applied = false;
             },
 
-            apply: function() {
-                this.classApplier.applyToRange(this.getRange() ,null, this.serializedHighlight);
+            apply: function(globalId) {
+                this.classApplier.applyToRange(this.getRange() ,null, this.serializedHighlight, globalId);
                 this.applied = true;
             },
 
             addMarker: function(globalId) {
               this.classApplier.applyMarker(this.getRange() ,null, this.serializedHighlight, globalId);
               this.applied = true;
+            },
+
+            updateStyle: function(newStyle, newClassAppliers) {
+              this.classApplier.updateHighlightStyle(this.getRange(), newStyle);
+              this.serializedHighlight = this.serializedHighlight.replace(this.classApplier.className, newStyle)
+              this.classApplier = newClassAppliers
+            },
+
+            updateGlobalId: function(gid) {
+              this.classApplier.updateHighlightGlobalId(this.getRange(), gid);
             },
 
             getHighlightElements: function() {
@@ -308,8 +318,36 @@
                 }
             },
 
+            removeHighlightByIds: function(highlightIds) {
+                this.removeHighlights(this.highlights.filter(function(highlight) {
+                  return highlightIds.includes(highlight.serializedHighlight)
+                }))
+            },
+
             removeAllHighlights: function() {
                 this.removeHighlights(this.highlights);
+            },
+
+            removeMarker: function(globalId) {
+                var element = this.doc.getElementById(globalId)
+                if (element) element.remove()
+            },
+
+            updateHighlightStyle: function(highlightId, newStyle) {
+                var highlight = this.highlights.find(function(h) {
+                  return highlightId == h.serializedHighlight
+                })
+                highlight && highlight.updateStyle(newStyle, this.classAppliers[newStyle])
+            },
+
+            updateHighlightGlobalId: function(highlightId, globalId) {
+                var highlight = this.highlights.find(function(h) {
+                  return highlightId == h.serializedHighlight
+                })
+                if (highlight) {
+                  highlight.updateGlobalId(globalId)
+                  highlight.addMarker(globalId)
+                }
             },
 
             getIntersectingHighlights: function(ranges) {
@@ -430,7 +468,8 @@
                 var newHighlights = [];
                 forEach(highlights, function(highlight) {
                     if (!highlight.applied) {
-                        highlight.apply(highlightStr);
+                        highlight.serializedHighlight = highlightStr
+                        highlight.apply();
                         newHighlights.push(highlight);
                     }
                 });
@@ -623,20 +662,46 @@
                 return highlights;
             },
 
-            deserializeAndApply: function(serialized) {
+            deserializeAndApply: function(serialized, serializedGlobalIds) {
                 var highlights = this.deserialize(serialized)
-                forEach(highlights, function(highlight) {
-                  highlight.apply();
+                var globalIds = serializedGlobalIds ? serializedGlobalIds.split("|") : []
+                highlights.forEach(function(highlight, index) {
+                  highlight.apply(globalIds[globalIds.length - 1 - index]);
                 })
             },
 
             deserializeAndMark: function(serialized, serializedGlobalIds) {
               var highlights = this.deserialize(serialized)
-              var globalIds = serializedGlobalIds.split("|")
+              var globalIds = serializedGlobalIds ? serializedGlobalIds.split("|") : []
               highlights.forEach(function(highlight, index) {
-                highlight.addMarker(globalIds[index])
+                //highlights is reverted
+                highlight.addMarker(globalIds[globalIds.length - 1 - index])
               })
+            },
+
+            getElementFromRangy: function(rangy) {
+                console.log("---getElementFromRangy---" + rangy)
+              var parts = rangy.split("$");
+              var characterRange = new CharacterRange(+parts[0], +parts[1]);
+              var containerElementId = parts[4] || null;
+              var classApplier = this.classAppliers[ parts[3] ];
+              if (!classApplier) {
+                throw new Error("No class applier found for class '" + parts[3] + "'");
+              }
+              var range = this.converter.characterRangeToRange(this.doc, characterRange, getContainerElement(this.doc, containerElementId));
+              console.log(range);
+              var textNodes = classApplier.getEffectiveTextNodes(range);
+              console.log(textNodes);
+              if (textNodes && textNodes.length) {
+                return textNodes[0].parentNode;
+              }
             }
+
+            // applyHighlights: function(highlights) {
+            //   forEach(highlights, function(highlight) {
+            //     highlight.apply();
+            //   })
+            // }
         };
 
         api.Highlighter = Highlighter;
