@@ -829,7 +829,7 @@
                 var marker = document.createElement("span")
                 marker.setAttribute("id", globalId);
                 marker.setAttribute("onclick", "onMarkerClick(this)");
-                var styleText = 'width: 48px; height: 48px; position: absolute; top: ' + (top + "px;") + ' left: ' +
+                var styleText = 'width: 48px; height: 48px; position: absolute; top: ' + ((top - 38) + "px;") + ' left: ' +
                   (Math.ceil(left / document.documentElement.clientWidth) *  document.documentElement.clientWidth - 48) + "px; " +
                   '-webkit-transform: scaleX(-1); transform: scaleX(-1); background-image: url(file:///android_asset/img/marker.png)'
                 marker.style.cssText = styleText
