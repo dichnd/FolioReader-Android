@@ -41,4 +41,6 @@ public interface FolioActivityCallback {
     void onMarkerClick(String id);
 
     void highlightTriggerAt(Rect rect, String highlightId, String gid, int style);
+
+    void saveReadPosition(String json, String text);
 }

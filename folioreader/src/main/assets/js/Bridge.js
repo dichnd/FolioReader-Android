@@ -699,7 +699,7 @@ function getFirstVisibleSpan(isHorizontal) {
     var spanCollection = document.querySelectorAll("span.sentence");
 
     if (spanCollection.length == 0) {
-        FolioPageFragment.storeFirstVisibleSpan(false, 0);
+        FolioPageFragment.storeFirstVisibleSpan(false, 0, "");
         return;
     }
 
@@ -716,7 +716,7 @@ function getFirstVisibleSpan(isHorizontal) {
 
     var usingId = spanElement.id ? true : false;
     var value = usingId ? spanElement.id : spanIndex;
-    FolioPageFragment.storeFirstVisibleSpan(usingId, value);
+    FolioPageFragment.storeFirstVisibleSpan(usingId, value, spanElement.innerText);
 }
 
 /**

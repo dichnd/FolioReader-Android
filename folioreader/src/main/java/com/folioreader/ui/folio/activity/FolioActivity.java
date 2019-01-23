@@ -644,6 +644,11 @@ public class FolioActivity
     }
 
     @Override
+    public void saveReadPosition(String json, String text) {
+        //TODO
+    }
+
+    @Override
     public void onSystemUiVisibilityChange(int visibility) {
         Log.v(LOG_TAG, "-> onSystemUiVisibilityChange -> visibility = " + visibility);
 

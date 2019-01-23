@@ -801,7 +801,7 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
      */
     @SuppressWarnings("unused")
     @JavascriptInterface
-    public void storeFirstVisibleSpan(boolean usingId, String value) {
+    public void storeFirstVisibleSpan(boolean usingId, String value, String text) {
         Log.v(LOG_TAG, "storeFirstVisibleSpan " + usingId + "  " + value);
         lastReadPosition = new ReadPositionImpl(mBookId, spineItem.getHref(), usingId, value);
         Log.v(LOG_TAG, lastReadPosition.toJson());
@@ -817,6 +817,8 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
             LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
 
             notify();
+
+            mActivityCallback.saveReadPosition(lastReadPosition.toJson(), text);
         }
     }
 
