@@ -540,15 +540,12 @@ public class FolioPageView extends FrameLayout implements MediaControllerCallbac
                     loadingView.hide();
                 }
 
+            } else if (mPosition == mActivityCallback.getCurrentChapterIndex() - 1) {
+                mWebview.loadUrl("javascript:scrollToLast()");
+            } else if (mPosition == mActivityCallback.getCurrentChapterIndex() + 1) {
+                mWebview.loadUrl("javascript:scrollToFirst()");
             } else {
-
-                if (mPosition == mActivityCallback.getCurrentChapterIndex() - 1) {
-                    // Scroll to last, the page before current page
-                    mWebview.loadUrl("javascript:scrollToLast()");
-                } else {
-                    // Make loading view invisible for all other fragments
-                    loadingView.hide();
-                }
+                loadingView.hide();
             }
         }
 
