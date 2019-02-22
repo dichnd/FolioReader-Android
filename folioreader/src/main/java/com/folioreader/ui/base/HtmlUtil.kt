@@ -20,6 +20,7 @@ object HtmlUtil {
     fun getHtmlContent(context: Context, htmlContent: String, config: Config): String {
         val cssPath = String.format(context.getString(R.string.css_tag), "file:///android_asset/css/Style.css")
         var jsPath = arrayOf(
+            "polyfills",
             "jsface.min",
             "jquery-3.1.1.min",
             "rangy-core",
