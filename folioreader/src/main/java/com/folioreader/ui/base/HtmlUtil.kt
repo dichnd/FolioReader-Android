@@ -8,7 +8,6 @@ import com.folioreader.R
 /**
  * @author gautam chibde on 14/6/17.
  */
-
 object HtmlUtil {
 
     /**
@@ -19,73 +18,40 @@ object HtmlUtil {
      * @return modified raw html string
      */
     fun getHtmlContent(context: Context, htmlContent: String, config: Config): String {
-        var htmlContent = htmlContent
-
         val cssPath = String.format(context.getString(R.string.css_tag), "file:///android_asset/css/Style.css")
+        var jsPath = arrayOf(
+            "jsface.min",
+            "jquery-3.1.1.min",
+            "rangy-core",
+            "rangy-highlighter",
+            "rangy-classapplier",
+            "rangy-serializer",
+            "Bridge",
+            "rangefix",
+            "readium-cfi.umd"
+        ).joinToString("\n", postfix = "\n") {
+            String.format(
+                context.getString(R.string.script_tag),
+                "file:///android_asset/js/$it.js")
+        }
 
-        var jsPath = String.format(
-            context.getString(R.string.script_tag),
-            "file:///android_asset/js/jsface.min.js"
-        ) + "\n"
-
-        jsPath = jsPath + String.format(
-            context.getString(R.string.script_tag),
-            "file:///android_asset/js/jquery-3.1.1.min.js"
-        ) + "\n"
-
-        jsPath = jsPath + String.format(
-            context.getString(R.string.script_tag),
-            "file:///android_asset/js/rangy-core.js"
-        ) + "\n"
-
-        jsPath = jsPath + String.format(
-            context.getString(R.string.script_tag),
-            "file:///android_asset/js/rangy-highlighter.js"
-        ) + "\n"
-
-        jsPath = jsPath + String.format(
-            context.getString(R.string.script_tag),
-            "file:///android_asset/js/rangy-classapplier.js"
-        ) + "\n"
-
-        jsPath = jsPath + String.format(
-            context.getString(R.string.script_tag),
-            "file:///android_asset/js/rangy-serializer.js"
-        ) + "\n"
-
-        jsPath = jsPath + String.format(
-            context.getString(R.string.script_tag),
-            "file:///android_asset/js/Bridge.js"
-        ) + "\n"
-
-        jsPath = jsPath + String.format(
-            context.getString(R.string.script_tag),
-            "file:///android_asset/js/rangefix.js"
-        ) + "\n"
-
-        jsPath = jsPath + String.format(
-            context.getString(R.string.script_tag),
-            "file:///android_asset/js/readium-cfi.umd.js"
-        ) + "\n"
-
-        jsPath = jsPath + String.format(
+        jsPath += String.format(
             context.getString(R.string.script_tag_method_call),
             "setMediaOverlayStyleColors('#C0ED72','#C0ED72')"
         ) + "\n"
 
-        jsPath = "$jsPath<meta name=\"viewport\" content=\"height=device-height, user-scalable=no\" />"
+        jsPath += "<meta name=\"viewport\" content=\"height=device-height, user-scalable=no\" />"
 
         val toInject = "\n$cssPath\n$jsPath\n</head>"
-        htmlContent = htmlContent.replace("</head>", toInject)
+        var html = htmlContent.replace("</head>", toInject)
 
-        var classes = ""
+        var classes =
         when (config.font) {
-            Constants.FONT_ANDADA -> classes = "andada"
-            Constants.FONT_LATO -> classes = "lato"
-            Constants.FONT_LORA -> classes = "lora"
-            Constants.FONT_RALEWAY -> classes = "raleway"
-            else -> {
-            }
+            Constants.FONT_ANDADA -> "andada"
+            Constants.FONT_LATO -> "lato"
+            Constants.FONT_LORA -> "lora"
+            Constants.FONT_RALEWAY -> "raleway"
+            else -> ""
         }
 
         if (config.isNightMode) {
@@ -102,10 +68,10 @@ object HtmlUtil {
             }
         }
 
-        htmlContent = htmlContent.replace(
+        html = html.replace(
             "<html", "<html class=\"" + classes + "\"" +
                     " onclick=\"onClickHtml()\""
         )
-        return htmlContent
+        return html
     }
 }
