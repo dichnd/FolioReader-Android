@@ -798,7 +798,7 @@
                 });
             },
 
-            applyToTextNode: function(textNode, positionsToPreserve,serializedHighlight) {
+            applyToTextNode: function(textNode, positionsToPreserve, serializedHighlight, globalId) {
 
                 // Check whether the text node can be styled. Text within a <style> or <script> element, for example,
                 // should not be styled. See issue 283.
@@ -810,9 +810,11 @@
                         this.elementHasProperties(parent, this.elementProperties) &&
                         this.elementHasAttributes(parent, this.elementAttributes)) {
                         addClass(parent, this.className, serializedHighlight);
+                        parent.setAttribute("gid", globalId);
                     } else {
                         var textNodeParent = textNode.parentNode;
                         var el = this.createContainer(textNodeParent, serializedHighlight);
+                        el.setAttribute("gid", globalId);
                         textNodeParent.insertBefore(el, textNode);
                         el.appendChild(textNode);
                     }
@@ -820,6 +822,19 @@
 
             },
 
+            applyMarkerToTextNode: function(textNode, positionsToPreserve, serializedHighlight, globalId) {
+                var rect = textNode.parentNode.getBoundingClientRect()
+                var left = document.documentElement.scrollLeft + rect.left
+                var top = document.documentElement.scrollTop + rect.top
+                var marker = document.createElement("span")
+                marker.setAttribute("id", globalId);
+                marker.setAttribute("onclick", "onMarkerClick(this)");
+                var styleText = 'width: 48px; height: 48px; position: absolute; top: ' + ((top - 38) + "px;") + ' left: ' +
+                  (Math.ceil(left / document.documentElement.clientWidth) *  document.documentElement.clientWidth - 48) + "px; " +
+                  '-webkit-transform: scaleX(-1); transform: scaleX(-1); background-image: url(file:///android_asset/img/marker.png)'
+                marker.style.cssText = styleText
+                document.body.appendChild(marker)
+            },
             isRemovable: function(el) {
                 return el.tagName.toLowerCase() == this.elementTagName &&
                     getSortedClassName(el) == this.elementSortedClassName &&
@@ -890,7 +905,7 @@
                 }
             },
 
-            applyToRange: function(range, rangesToPreserve, serializedHighlight) {
+            applyToRange: function(range, rangesToPreserve, serializedHighlight, globalId) {
                 var applier = this;
                 rangesToPreserve = rangesToPreserve || [];
 
@@ -911,7 +926,7 @@
                         if (!applier.isIgnorableWhiteSpaceNode(textNode) && !applier.getSelfOrAncestorWithClass(textNode) &&
                                 applier.isModifiable(textNode)) {
 
-                                applier.applyToTextNode(textNode, positionsToPreserve,serializedHighlight);
+                                applier.applyToTextNode(textNode, positionsToPreserve,serializedHighlight, globalId);
                         }
                     });
                     var lastTextNode = textNodes[textNodes.length - 1];
@@ -932,6 +947,28 @@
                 });
             },
 
+            applyMarker: function(range, rangesToPreserve, serializedHighlight, globalId) {
+                console.log("applyMarker")
+                console.log(range);
+                var applier = this;
+                rangesToPreserve = rangesToPreserve || [];
+
+                // Create an array of range boundaries to preserve
+                var positionsToPreserve = getRangeBoundaries(rangesToPreserve || []);
+
+                range.splitBoundariesPreservingPositions(positionsToPreserve);
+
+                // Tidy up the DOM by removing empty containers
+                if (applier.removeEmptyElements) {
+                    applier.removeEmptyContainers(range);
+                }
+
+                var textNodes = getEffectiveTextNodes(range);
+                if (textNodes.length) {
+                  applier.applyMarkerToTextNode(textNodes[0], rangesToPreserve, serializedHighlight, globalId)
+                }
+            },
+
             applyToRanges: function(ranges) {
 
                 var i = ranges.length;
@@ -942,6 +979,18 @@
 
 
                 return ranges;
+            },
+
+            applyMarkers: function(ranges) {
+
+              var i = ranges.length;
+              while (i--) {
+                  this.applyMarker(ranges[i], ranges);
+                  //Highlight.printData("**ranges"+ranges[i]);
+              }
+
+
+              return ranges;
             },
 
             applyToSelection: function(win) {
@@ -1006,6 +1055,38 @@
                 }
 
                 return ranges;
+            },
+
+            updateHighlightStyle: function(range, newStyle) {
+              var positionsToPreserve = getRangeBoundaries([]);
+
+              range.splitBoundariesPreservingPositions(positionsToPreserve);
+
+              var textNodes = getEffectiveTextNodes(range);
+              if (textNodes.length) {
+                textNodes.forEach(function(textNode) {
+                  if (textNode.parentNode) {
+                    var currentStyle = textNode.parentNode.className
+                    textNode.parentNode.className = newStyle
+                    textNode.parentNode.id = textNode.parentNode.id.replace(currentStyle, newStyle)
+                  }
+                })
+              }
+            },
+
+            updateHighlightGlobalId: function(range, gid) {
+              var positionsToPreserve = getRangeBoundaries([]);
+
+              range.splitBoundariesPreservingPositions(positionsToPreserve);
+
+              var textNodes = getEffectiveTextNodes(range);
+              if (textNodes.length) {
+                textNodes.forEach(function(textNode) {
+                  if (textNode.parentNode) {
+                    textNode.parentNode.setAttribute("gid", gid)
+                  }
+                })
+              }
             },
 
             undoToSelection: function(win) {
@@ -1078,7 +1159,12 @@
                 return elements;
             },
 
-            detach: function() {}
+            detach: function() {},
+
+            // FIXME dich why need this fun?
+            getEffectiveTextNodes: function(range) {
+                return getEffectiveTextNodes(range)
+            }
         };
 
         function createClassApplier(className, options, tagNames) {

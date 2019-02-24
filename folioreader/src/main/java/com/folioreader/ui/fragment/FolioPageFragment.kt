@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.PorterDuff
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -636,6 +637,17 @@ class FolioPageFragment : Fragment(),
         )
     }
 
+    override fun loadMarker(rangy: String, globalIds: String) {
+        mWebview!!.loadUrl(
+            String.format(
+                "javascript:if(typeof ssReader !== \"undefined\"){ssReader.markHighlight('%s', '%s');}",
+                rangy,
+                globalIds
+            )
+        )
+    }
+
+
     private fun setupScrollBar() {
         UiUtil.setColorIntToDrawable(mConfig!!.themeColor, mScrollSeekbar!!.progressDrawable)
         val thumbDrawable = ContextCompat.getDrawable(activity!!, R.drawable.icons_sroll)
@@ -878,5 +890,13 @@ class FolioPageFragment : Fragment(),
         Log.v(LOG_TAG, "-> clearSearchLocator -> " + spineItem.href!!)
         mWebview!!.loadUrl(getString(R.string.callClearSelection))
         searchLocatorVisible = null
+    }
+
+    override fun showMenu(): Boolean {
+        return true
+    }
+
+    override fun triggerHighlight(rect: Rect) {
+        Log.d(LOG_TAG, "triggerHighlight at: $rect")
     }
 }

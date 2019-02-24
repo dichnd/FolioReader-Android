@@ -58,14 +58,15 @@ public class FolioPageViewAdapter extends PagerAdapter {
     @Override
     public void destroyItem(ViewGroup container, int position, Object object) {
         ((FolioPageView) object).onStop();
-        views.set(position, null);
+        container.removeView((FolioPageView) object);
+//        views.set(position, null);
     }
 
     @NonNull
     @Override
     public Object instantiateItem(@NonNull ViewGroup container, int position) {
         FolioPageView folioPageView = getItem(position);
-        views.set(position, folioPageView);
+        //views.set(position, folioPageView);
         container.addView(folioPageView);
         return folioPageView;
     }

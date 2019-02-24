@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.PorterDuff
+import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
@@ -87,6 +88,7 @@ class FolioPageView : FrameLayout,
         }
     }
 
+// TODO impl
 //    constructor(context: Context) : super(context) { initView() }
 //    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) { initView() }
     constructor(context: Context, arguments: Bundle, cb: FolioActivityCallback) : super(context) {
@@ -279,10 +281,10 @@ class FolioPageView : FrameLayout,
      */
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun updateHighlight(event: UpdateHighlightEvent) {
-        if (isShown) {
-            this.rangy = HighlightUtil.generateRangyString(pageName)
-            loadRangy(this.rangy)
-        }
+//        if (isShown) {
+//            this.rangy = HighlightUtil.generateRangyString(pageName)
+//            loadRangy(this.rangy)
+//        }
     }
 
     fun scrollToAnchorId(href: String) {
@@ -418,7 +420,7 @@ class FolioPageView : FrameLayout,
             Log.d(LOG_TAG, "onPageFinished")
             mIsPageLoaded = true // TODO do we need reset mIsPageLoaded = false in onPageStarted ?
             mWebview!!.loadUrl("javascript:checkCompatMode()")
-            mWebview!!.loadUrl("javascript:alert(getReadingTime())")
+//            mWebview!!.loadUrl("javascript:alert(getReadingTime())")
 
             if (mActivityCallback!!.direction == Config.Direction.HORIZONTAL)
                 mWebview!!.loadUrl("javascript:initHorizontalDirection()")
@@ -675,7 +677,7 @@ class FolioPageView : FrameLayout,
         )
     }
 
-    fun loadMarker(rangy: String, globalIds: String) {
+    override fun loadMarker(rangy: String, globalIds: String) {
         mIsLoadedMarker = true
         if (mIsPageLoaded)
             mWebview?.loadUrl(
@@ -702,6 +704,25 @@ class FolioPageView : FrameLayout,
         } else
             this.mHighlightToShow = "$rangy@@$globalIds"
     }
+
+    fun updateHighlightStyle(highlightId: String, style: HighlightImpl.HighlightStyle) {
+        mWebview?.loadUrl(
+            String.format(
+                "javascript:if(typeof ssReader !== \"undefined\"){ssReader.updateHighlightStyle('%s', '%s');}",
+                highlightId, HighlightImpl.HighlightStyle.classForStyle(style)
+            )
+        )
+    }
+
+    fun updateHighlightGlobalId(highlightId: String, globalId: String) {
+        mWebview?.loadUrl(
+            String.format(
+                "javascript:if(typeof ssReader !== \"undefined\"){ssReader.updateHighlightGlobalId('%s', '%s');}",
+                highlightId, globalId
+            )
+        )
+    }
+
 
     private fun setupScrollBar() {
         UiUtil.setColorIntToDrawable(mConfig!!.themeColor, seekBarDrawable)
@@ -974,4 +995,51 @@ class FolioPageView : FrameLayout,
     private fun getString(@StringRes resId: Int): String {
         return context.resources.getString(resId)
     }
+
+    override fun showMenu(): Boolean {
+        return false
+    }
+
+    override fun triggerHighlight(rect: Rect) {
+        //TODO
+    }
+
+    fun deleteHighlight(highlightId: String, globalId: String) {
+        mWebview?.loadUrl("javascript:clearSelection()")
+        mWebview?.loadUrl(
+            String.format(
+                "javascript:if(typeof ssReader !== \"undefined\"){ssReader.deleteHighlight('%s');}",
+                highlightId
+            )
+        )
+        mWebview?.loadUrl(
+            String.format(
+                "javascript:if(typeof ssReader !== \"undefined\"){ssReader.removeMarker('%s');}",
+                globalId
+            )
+        )
+    }
+
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event) {
+//        int count = webViewPager.getAdapter().getCount();
+//        int current = webViewPager.getCurrentItem();
+//        if (current < count - 1) {
+//            super.onTouchEvent(event);
+//            return true;
+//        } else return super.onTouchEvent(event);
+//    }
+//
+//    @Override
+//    public boolean onInterceptTouchEvent(MotionEvent ev) {
+//        Log.d(LOG_TAG, "-> onInterceptTouchEvent -> " + AppUtil.actionToString(ev.getAction()));
+//        Log.d(LOG_TAG, "onInterceptTouchEvent: spinItem: " + spineItem.getHref() + ": " + mIsPageLoaded);
+//        Log.d(LOG_TAG, "webViewPager child count: " + webViewPager.getAdapter().getCount());
+//        Log.d(LOG_TAG, "webViewPager current page: " + webViewPager.getCurrentItem());
+//        int count = webViewPager.getAdapter().getCount();
+//        int current = webViewPager.getCurrentItem();
+//        if (current < count - 1) {
+//            return true;
+//        } else return super.onInterceptTouchEvent(ev);
+//    }
 }

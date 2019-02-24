@@ -335,10 +335,19 @@ $(function () {
             }
         },
 
-        setHighlights: function (serializedHighlight) {
+        setHighlights: function(serializedHighlight, serializedGlobalIds){
             try {
+                console.log("setHighlights: " + serializedHighlight + " " + serializedGlobalIds);
                 this.highlighter.removeAllHighlights();
-                this.highlighter.deserialize(serializedHighlight);
+                this.highlighter.deserializeAndApply(serializedHighlight, serializedGlobalIds);
+            } catch (err) {
+            }
+        },
+
+        markHighlight: function(serializedHighlight, serializedGlobalIds) {
+            try {
+                console.log("markHighlight: " + serializedHighlight + " " + serializedGlobalIds)
+                this.highlighter.deserializeAndMark(serializedHighlight, serializedGlobalIds);
             } catch (err) {
             }
         },
@@ -363,6 +372,30 @@ $(function () {
         search: function () {
             SSBridge.onSearch(window.getSelection().toString());
             this.clearSelection();
+    },
+
+    goToRangy: function(rangy) {
+        console.log("---goToRangy---" + rangy);
+        var element = this.highlighter.getElementFromRangy(rangy);
+        console.log(element);
+        if (element) scrollToElement(element);
+        LoadingView.hide();
+    },
+
+    deleteHighlight: function(highlightId) {
+        this.highlighter.removeHighlightByIds([highlightId])
+    },
+
+    removeMarker: function(globalId) {
+        this.highlighter.removeMarker(globalId)
+    },
+
+    updateHighlightStyle: function(highlightId, style) {
+      this.highlighter.updateHighlightStyle(highlightId, style)
+    },
+
+    updateHighlightGlobalId: function(highlightId, globalId) {
+      this.highlighter.updateHighlightGlobalId(highlightId, globalId)
         }
     });
 
@@ -489,6 +522,14 @@ var LoadingView = {
     }
 };*/
 
+/* FIXME dich changed this fun
+function getFirstVisibleSpan(isHorizontal) {
+    ...
+        FolioPageFragment.storeFirstVisibleSpan(false, 0);
+    ...
+    FolioPageFragment.storeFirstVisibleSpan(usingId, value);
+}
+*/
 function goToHighlight(highlightId) {
     var element = document.getElementById(highlightId.toString());
     if (element)
@@ -572,7 +613,7 @@ function horizontalRecheck() {
 }
 
 function initHorizontalDirection() {
-
+    console.log("Folio: initHorizontalDirection");
     preInitHorizontalDirection();
     postInitHorizontalDirection();
 
@@ -580,7 +621,7 @@ function initHorizontalDirection() {
 }
 
 function preInitHorizontalDirection() {
-
+    console.log("Folio: preInitHorizontalDirection");
     //console.log(window);
     //console.log("-> " + document.getElementsByTagName('title')[0].innerText);
     var htmlElement = document.getElementsByTagName('html')[0];
@@ -623,6 +664,7 @@ function preInitHorizontalDirection() {
 }
 
 function postInitHorizontalDirection() {
+    console.log("Folio: postInitHorizontalDirection");
 
     var htmlElement = document.getElementsByTagName('html')[0];
     var bodyElement = document.getElementsByTagName('body')[0];
@@ -654,9 +696,9 @@ function postInitHorizontalDirection() {
             + ", Something wrong in pageCount calculation");
     }
 
-    //console.log("-> scrollWidth = " + scrollWidth);
-    //console.log("-> newBodyWidth = " + newBodyWidth);
-    //console.log("-> pageCount = " + pageCount);
+    console.log("-> scrollWidth = " + scrollWidth);
+    console.log("-> newBodyWidth = " + newBodyWidth);
+    console.log("-> pageCount = " + pageCount);
 
     FolioPageFragment.setHorizontalPageCount(pageCount);
 }
@@ -678,7 +720,6 @@ function bodyOrHtml() {
  * @returns {(Element|Text|Range)} nodeOrRange
  */
 function scrollToNodeOrRange(nodeOrRange) {
-
     var scrollingElement = bodyOrHtml();
     var direction = FolioWebView.getDirection();
 
@@ -741,9 +782,11 @@ function scrollToNodeOrRange(nodeOrRange) {
 
         case Direction.HORIZONTAL:
             var clientWidth = document.documentElement.clientWidth;
+            console.log("scrollToElement--" + clientWidth + " -- " + element.offsetLeft)
+            console.log(element.offsetLeft / clientWidth)
             var pageIndex = Math.floor(nodeOffsetLeft / clientWidth);
             var newScrollLeft = clientWidth * pageIndex;
-            //console.log("-> newScrollLeft = " + newScrollLeft);
+            console.log("-> newScrollLeft = " + newScrollLeft);
             scrollingElement.scrollLeft = newScrollLeft;
             WebViewPager.setCurrentPage(pageIndex);
             break;
@@ -779,8 +822,18 @@ function highlightSearchLocator(rangeCfi) {
 function getSelectionRect(element) {
     console.log("-> getSelectionRect");
 
+    var highlightId = null;
+    var gid = null;
+    var style = 0;
     var range;
     if (element !== undefined) {
+        highlightId = element.id;
+        gid = element.getAttribute("gid");
+        //need polyfill when use findIndex
+        style = ['highlight_yellow', 'highlight_green', 'highlight_blue', 'highlight_pink'].findIndex(function(s) {
+            return element.className.includes(s)
+        })
+        console.log(element.className, style)
         range = document.createRange();
         range.selectNodeContents(element);
     } else {
@@ -793,7 +846,10 @@ function getSelectionRect(element) {
         left: rect.left,
         top: rect.top,
         right: rect.right,
-        bottom: rect.bottom
+        bottom: rect.bottom,
+        highlightId: highlightId,
+        gid: gid,
+        style: style
     };
 }
 
@@ -807,8 +863,15 @@ function onClickHighlight(element) {
     console.log("-> onClickHighlight");
     event.stopPropagation();
     thisHighlight = element;
-    var rectJson = getSelectionRect(element);
-    FolioWebView.setSelectionRect(rectJson.left, rectJson.top, rectJson.right, rectJson.bottom);
+    var o = getSelectionRect(element);
+    FolioWebView.setSelectionRect(o);
+}
+function onMarkerClick(element) {
+    console.log("-> onMarkerClick")
+    event.stopPropagation();
+    if (element !== undefined) {
+        FolioWebView.onMarkerClick(element.id);
+    }
 }
 
 function deleteThisHighlight() {
@@ -834,6 +897,7 @@ function onClickHtml() {
     } else {
         FolioWebView.toggleSystemUI();
     }
+    FolioWebView.onClickHtml();
 }
 
 function computeLastReadCfi() {

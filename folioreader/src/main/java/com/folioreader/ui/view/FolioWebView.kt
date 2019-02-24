@@ -88,7 +88,7 @@ class FolioWebView : WebView {
     private var eventActionDown: MotionEvent? = null
     private var pageWidthCssDp: Int = 0
     private var pageWidthCssPixels: Float = 0.toFloat()
-    private lateinit var webViewPager: WebViewPager
+    private var webViewPager: WebViewPager? = null
     private lateinit var uiHandler: Handler
     private lateinit var folioActivityCallback: FolioActivityCallback
 //    private lateinit var parentFragment: FolioPageFragment
@@ -109,6 +109,9 @@ class FolioWebView : WebView {
     private var lastTouchAction: Int = 0
     private var destroyed: Boolean = false
     private var handleHeight: Int = 0
+    private var selectedHighlightId: String? = null
+    private var selectedGid: String? = null
+    private var selectedStyle: Int = 0
 
     private var lastScrollType: LastScrollType? = null
 
@@ -158,6 +161,13 @@ class FolioWebView : WebView {
         return popupWindow.isShowing
     }
 
+    @JavascriptInterface
+    fun onClickHtml() {
+      uiHandler.post {
+        folioActivityCallback.onClickHtml()
+      }
+    }
+
     private inner class HorizontalGestureListener : GestureDetector.SimpleOnGestureListener() {
 
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
@@ -169,7 +179,7 @@ class FolioWebView : WebView {
         override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
             //Log.d(LOG_TAG, "-> onFling -> e1 = " + e1 + ", e2 = " + e2 + ", velocityX = " + velocityX + ", velocityY = " + velocityY);
 
-            if (!webViewPager.isScrolling) {
+            if (!(webViewPager?.isScrolling ?: true)) {
                 // Need to complete the scroll as ViewPager thinks these touch events should not
                 // scroll it's pages.
                 //Log.d(LOG_TAG, "-> onFling -> completing scroll");
@@ -204,6 +214,10 @@ class FolioWebView : WebView {
         selectionRect = Rect()
         uiHandler.removeCallbacks(isScrollingRunnable)
         isScrollingCheckDuration = 0
+        selectedHighlightId = null
+        selectedGid = null
+
+        HighlightUtil.sendHighlightBroadcastAction(context, HighLight.HighLightAction.DISMISS_POPUP)
         return wasShowing
     }
 
@@ -335,7 +349,7 @@ class FolioWebView : WebView {
         }
     }
 
-    private fun showDictDialog(selectedText: String?) {context
+    private fun showDictDialog(selectedText: String?) {
 //        val dictionaryFragment = DictionaryFragment()
 //        val bundle = Bundle()
 //        bundle.putString(Constants.SELECTED_WORD, selectedText?.trim())
@@ -417,12 +431,16 @@ class FolioWebView : WebView {
         //Log.v(LOG_TAG, "-> computeHorizontalScroll");
 
         // Rare condition in fast scrolling
-        if (!::webViewPager.isInitialized)
-            return super.onTouchEvent(event)
-
-        webViewPager.dispatchTouchEvent(event)
-        val gestureReturn = gestureDetector.onTouchEvent(event)
-        return if (gestureReturn) true else super.onTouchEvent(event)
+//        if (!::webViewPager.isInitialized)
+//            return super.onTouchEvent(event)
+        if (webViewPager != null) {
+            webViewPager?.dispatchTouchEvent(event)
+            val gestureReturn = gestureDetector.onTouchEvent(event)
+            return if (gestureReturn) true else super.onTouchEvent(event)
+        } else {
+	        return super.onTouchEvent(event)
+            //return true
+        }
     }
 
     fun getScrollXDpForPage(page: Int): Int {
@@ -440,7 +458,7 @@ class FolioWebView : WebView {
 
         uiHandler.post {
             webViewPager = (parent as View).findViewById(R.id.webViewPager)
-            webViewPager.setHorizontalPageCount(this@FolioWebView.horizontalPageCount)
+            webViewPager?.setHorizontalPageCount(this@FolioWebView.horizontalPageCount)
         }
     }
 
@@ -481,11 +499,7 @@ class FolioWebView : WebView {
             Log.d(LOG_TAG, "-> onPrepareActionMode")
 
             evaluateJavascript("javascript:getSelectionRect()") { value ->
-                val rectJson = JSONObject(value)
-                setSelectionRect(
-                    rectJson.getInt("left"), rectJson.getInt("top"),
-                    rectJson.getInt("right"), rectJson.getInt("bottom")
-                )
+                setSelectionRect(value)
             }
             return false
         }
@@ -529,11 +543,7 @@ class FolioWebView : WebView {
             Log.d(LOG_TAG, "-> onGetContentRect")
 
             evaluateJavascript("javascript:getSelectionRect()") { value ->
-                val rectJson = JSONObject(value)
-                setSelectionRect(
-                    rectJson.getInt("left"), rectJson.getInt("top"),
-                    rectJson.getInt("right"), rectJson.getInt("bottom")
-                )
+                setSelectionRect(value)
             }
         }
     }
@@ -659,17 +669,26 @@ class FolioWebView : WebView {
     }
 
     @JavascriptInterface
-    fun setSelectionRect(left: Int, top: Int, right: Int, bottom: Int) {
-
+    fun setSelectionRect(json: String) {
+//    fun setSelectionRect(left: Int, top: Int, right: Int, bottom: Int, highlightId: String?, gid: String?, style: Int) {
+        val o = JSONObject(json)
+        selectedHighlightId = o.optString("highlightId")
+        selectedGid = o.optString("gid")
+        selectedStyle = o.optInt("style")
         val currentSelectionRect = Rect()
-        currentSelectionRect.left = (left * density).toInt()
-        currentSelectionRect.top = (top * density).toInt()
-        currentSelectionRect.right = (right * density).toInt()
-        currentSelectionRect.bottom = (bottom * density).toInt()
+        currentSelectionRect.left = (o.getInt("left") * density).toInt()
+        currentSelectionRect.top = (o.getInt("top") * density).toInt()
+        currentSelectionRect.right = (o.getInt("right") * density).toInt()
+        currentSelectionRect.bottom = (o.getInt("bottom") * density).toInt()
         Log.d(LOG_TAG, "-> setSelectionRect -> $currentSelectionRect")
 
         computeTextSelectionRect(currentSelectionRect)
         uiHandler.post { showTextSelectionPopup() }
+    }
+
+    @JavascriptInterface
+    fun onMarkerClick(globalId: String) {
+        folioActivityCallback.onMarkerClick(globalId)
     }
 
     private fun computeTextSelectionRect(currentSelectionRect: Rect) {
@@ -688,7 +707,7 @@ class FolioWebView : WebView {
         }
         Log.i(LOG_TAG, "-> currentSelectionRect intersects viewportRect")
 
-        if (selectionRect == currentSelectionRect) {
+        if (selectionRect == currentSelectionRect && folioBookHolder.showMenu()) {
             Log.i(
                 LOG_TAG, "-> setSelectionRect -> currentSelectionRect is equal to previous " +
                         "selectionRect so no need to computeTextSelectionRect and show popupWindow again"
@@ -763,6 +782,9 @@ class FolioWebView : WebView {
             popupRect.left -= dx
             popupRect.right -= dx
         }
+//        if (folioBookHolder.showMenu()) uiHandler.post { showTextSelectionPopup() }
+//        folioBookHolder.triggerHighlight(belowSelectionRect)
+//        HighlightUtil.sendHighlightTriggerAt(context, belowSelectionRect)
     }
 
     private fun showTextSelectionPopup() {
@@ -785,10 +807,16 @@ class FolioWebView : WebView {
                 popupWindow.dismiss()
                 popupWindow = PopupWindow(viewTextSelection, WRAP_CONTENT, WRAP_CONTENT)
                 popupWindow.isClippingEnabled = false
-                popupWindow.showAtLocation(
-                    this@FolioWebView, Gravity.NO_GRAVITY,
-                    popupRect.left, popupRect.top
-                )
+
+                if (folioBookHolder.showMenu()) {
+		    popupWindow.showAtLocation(
+		    	this@FolioWebView, Gravity.NO_GRAVITY,
+                        popupRect.left, popupRect.top
+		    )
+		}
+                folioBookHolder.triggerHighlight(popupRect)
+//                HighlightUtil.sendHighlightTriggerAt(context, popupRect, selectedHighlightId)
+                folioActivityCallback.highlightTriggerAt(popupRect, selectedHighlightId, selectedGid, selectedStyle)
             } else {
                 Log.i(LOG_TAG, "-> Still scrolling, don't show Popup")
                 oldScrollX = currentScrollX

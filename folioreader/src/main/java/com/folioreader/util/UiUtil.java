@@ -160,7 +160,7 @@ public class UiUtil {
     }
 
     public static void setColorIntToDrawable(@ColorInt int color, Drawable drawable) {
-        drawable.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+        if (drawable != null) drawable.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
     }
 
     public static void setColorResToDrawable(@ColorRes int colorResId, Drawable drawable) {

@@ -5,6 +5,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Rect;
+import android.util.Log;
 import android.os.Parcelable;
 import androidx.annotation.Nullable;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -24,6 +26,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -51,6 +54,7 @@ public class FolioReader {
     private ReadLocatorListener readLocatorListener;
     private OnClosedListener onClosedListener;
     private ReadLocator readLocator;
+    private ArrayList<OnHighlightListener> onHighlightListeners = new ArrayList<>();
 
     @Nullable
     public Retrofit retrofit;
@@ -70,11 +74,31 @@ public class FolioReader {
     private BroadcastReceiver highlightReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            HighlightImpl highlightImpl = intent.getParcelableExtra(HighlightImpl.INTENT);
             HighLight.HighLightAction action = (HighLight.HighLightAction)
                     intent.getSerializableExtra(HighLight.HighLightAction.class.getName());
-            if (onHighlightListener != null && highlightImpl != null && action != null) {
-                onHighlightListener.onHighlight(highlightImpl, action);
+            if (action == HighLight.HighLightAction.TRIGGER) {
+                Rect rect = intent.getParcelableExtra("rect");
+                String highlightId = intent.getStringExtra("id");
+                for (OnHighlightListener listener : onHighlightListeners) {
+                    listener.onTriggerHighlight(rect, highlightId);
+                }
+            } else if (action == HighLight.HighLightAction.DISMISS_POPUP) {
+                for (OnHighlightListener listener : onHighlightListeners) {
+                    listener.onDismissPopup();
+                }
+            } else if (action == HighLight.HighLightAction.DELETE) {
+                HighlightImpl highlightImpl = intent.getParcelableExtra(HighlightImpl.INTENT);
+                for (OnHighlightListener listener : onHighlightListeners) {
+                    listener.onDeleteHighlight(highlightImpl);
+                }
+            } else {
+                HighlightImpl highlightImpl = intent.getParcelableExtra(HighlightImpl.INTENT);
+                if (onHighlightListener != null && highlightImpl != null && action != null) {
+                    for (OnHighlightListener listener : onHighlightListeners) {
+                        listener.onHighlight(highlightImpl, action);
+                    }
+//                    onHighlightListener.onHighlight(highlightImpl, action);
+                }
             }
         }
     };
@@ -119,6 +143,8 @@ public class FolioReader {
     private FolioReader(Context context) {
         this.context = context;
         DbAdapter.initialize(context);
+
+        Log.d("FolioReader", "Context hashcode " + context.hashCode());
 
         LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(context);
         localBroadcastManager.registerReceiver(highlightReceiver,
@@ -223,7 +249,19 @@ public class FolioReader {
     }
 
     public FolioReader setOnHighlightListener(OnHighlightListener onHighlightListener) {
+        Log.d("FolioReader", "setOnHighlightListener: " + onHighlightListener.toString());
         this.onHighlightListener = onHighlightListener;
+        this.onHighlightListeners.add(onHighlightListener);
+        return singleton;
+    }
+
+    public FolioReader addOnHighlightListener(OnHighlightListener onHighlightListener) {
+        this.onHighlightListeners.add(onHighlightListener);
+        return singleton;
+    }
+
+    public FolioReader removeOnHighlightListener(OnHighlightListener onHighlightListener) {
+        this.onHighlightListeners.remove(onHighlightListener);
         return singleton;
     }
 

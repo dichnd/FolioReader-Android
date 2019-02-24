@@ -55,6 +55,7 @@ import com.folioreader.model.event.MediaOverlayPlayPauseEvent
 import com.folioreader.model.locators.ReadLocator
 import com.folioreader.model.locators.SearchLocator
 import com.folioreader.ui.adapter.FolioPageFragmentAdapter
+import com.folioreader.ui.adapter.FolioPageViewAdapter
 import com.folioreader.ui.adapter.SearchAdapter
 import com.folioreader.ui.fragment.FolioPageFragment
 import com.folioreader.ui.fragment.MediaControllerFragment
@@ -453,6 +454,9 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
 
     }
 
+    /**
+     * read book file and create server serve book content
+     */
     @Throws(Exception::class)
     private fun initBook() {
         Log.v(LOG_TAG, "-> initBook")
@@ -503,6 +507,9 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
         //TODO -> Fail gracefully
     }
 
+    /**
+     * correct book id, init spine and search uri
+     */
     private fun onBookInitSuccess() {
 
         val publication = pubBox!!.publication
@@ -557,6 +564,8 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
             supportFragmentManager,
             spine, bookFileName, mBookId
         )
+		val adapter = FolioPageViewAdapter(this, spine, bookFileName, mBookId)
+        adapter.setActivityCallback(this)
         mFolioPageViewPager!!.adapter = mFolioPageFragmentAdapter
         mFolioPageViewPager!!.currentItem = currentChapterIndex
 
@@ -688,6 +697,22 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
 
     override fun getActivity(): WeakReference<FolioActivity> {
         return WeakReference(this)
+    }
+
+    override fun onClickHtml() {
+        //TODO
+    }
+
+    override fun onMarkerClick(id: String) {
+        //TODO
+    }
+
+    override fun highlightTriggerAt(rect: Rect, highlightId: String, gid: String, style: Int) {
+        //TODO
+    }
+
+    override fun saveReadPosition(json: String, text: String) {
+        //TODO
     }
 
     override fun onSystemUiVisibilityChange(visibility: Int) {
@@ -900,7 +925,10 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
         mFolioPageFragmentAdapter = FolioPageFragmentAdapter(
             supportFragmentManager,
             spine, bookFileName, mBookId
-        )
+		)
+        val adapter = FolioPageViewAdapter(this, spine, bookFileName, mBookId)
+        adapter.setActivityCallback(this)
+
         mFolioPageViewPager!!.adapter = mFolioPageFragmentAdapter
 
         // In case if SearchActivity is recreated due to screen rotation then FolioActivity

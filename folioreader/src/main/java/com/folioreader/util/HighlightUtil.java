@@ -2,6 +2,7 @@ package com.folioreader.util;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -68,11 +69,12 @@ public class HighlightUtil {
      */
     private static String getRangyString(String rangy, String oldRangy) {
         List<String> rangyList = getRangyArray(rangy);
-        for (String firs : getRangyArray(oldRangy)) {
-            if (rangyList.contains(firs)) {
-                rangyList.remove(firs);
-            }
-        }
+        rangyList.removeAll(getRangyArray(oldRangy));
+//        for (String firs : getRangyArray(oldRangy)) {
+//            if (rangyList.contains(firs)) {
+//                rangyList.remove(firs);
+//            }
+//        }
         if (rangyList.size() >= 1) {
             return rangyList.get(0);
         } else {
@@ -116,6 +118,23 @@ public class HighlightUtil {
                                                    HighLight.HighLightAction action) {
         LocalBroadcastManager.getInstance(context).sendBroadcast(
                 getHighlightBroadcastIntent(highlightImpl, action));
+    }
+
+    public static void sendHighlightTriggerAt(Context context, Rect rect, String highlightId) {
+        Log.d("FolioReader", "111 Context hashcode " + context.hashCode());
+        Bundle bundle = new Bundle();
+        bundle.putSerializable(HighLight.HighLightAction.class.getName(), HighLight.HighLightAction.TRIGGER);
+        bundle.putParcelable("rect", rect);
+        bundle.putString("id", highlightId);
+        Intent intent = new Intent(HighlightImpl.BROADCAST_EVENT).putExtras(bundle);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
+
+    public static void sendHighlightBroadcastAction(Context context, HighLight.HighLightAction action) {
+        Bundle bundle = new Bundle();
+        bundle.putSerializable(HighLight.HighLightAction.class.getName(), action);
+        Intent intent = new Intent(HighlightImpl.BROADCAST_EVENT).putExtras(bundle);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 
     public static Intent getHighlightBroadcastIntent(HighlightImpl highlightImpl,
