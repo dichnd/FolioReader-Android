@@ -129,7 +129,7 @@ class FolioPageView : FrameLayout,
     private var mIsPageLoaded = false
     private var mMarkerInfo: String? = null
     private var mHighlightToShow: String? = null
-    private var mIsLoadedMarker = false
+    var isLoadedMarker = false
 
     override val pageName: String
         get() = mBookTitle + "$" + spineItem.href
@@ -667,7 +667,7 @@ class FolioPageView : FrameLayout,
     }
 
     override fun loadMarker(rangy: String, globalIds: String) {
-        mIsLoadedMarker = true
+        isLoadedMarker = true
         if (mIsPageLoaded)
             mWebview?.loadUrl(
                 String.format(
