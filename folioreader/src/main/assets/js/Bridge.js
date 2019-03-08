@@ -378,7 +378,7 @@ $(function () {
         console.log("---goToRangy---" + rangy);
         var element = this.highlighter.getElementFromRangy(rangy);
         console.log(element);
-        if (element) scrollToElement(element);
+        if (element) scrollToNodeOrRange(element);
         LoadingView.hide();
     },
 
@@ -782,8 +782,6 @@ function scrollToNodeOrRange(nodeOrRange) {
 
         case Direction.HORIZONTAL:
             var clientWidth = document.documentElement.clientWidth;
-            console.log("scrollToElement--" + clientWidth + " -- " + element.offsetLeft)
-            console.log(element.offsetLeft / clientWidth)
             var pageIndex = Math.floor(nodeOffsetLeft / clientWidth);
             var newScrollLeft = clientWidth * pageIndex;
             console.log("-> newScrollLeft = " + newScrollLeft);
