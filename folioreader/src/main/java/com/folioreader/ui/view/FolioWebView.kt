@@ -5,7 +5,6 @@ import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
-import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
@@ -23,7 +22,6 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.core.view.GestureDetectorCompat
 import com.folioreader.Config
-import com.folioreader.Constants
 import com.folioreader.R
 import com.folioreader.model.DisplayUnit
 import com.folioreader.model.HighLight
@@ -32,17 +30,20 @@ import com.folioreader.model.sqlite.HighLightTable
 import com.folioreader.ui.base.FolioBookHolder
 import com.folioreader.ui.activity.FolioActivity
 import com.folioreader.ui.activity.FolioActivityCallback
-import com.folioreader.ui.fragment.DictionaryFragment
-import com.folioreader.ui.fragment.FolioPageFragment
 import com.folioreader.util.AppUtil
 import com.folioreader.util.HighlightUtil
 import com.folioreader.util.UiUtil
-import com.mcxiaoke.koi.ext.getActivity
 import dalvik.system.PathClassLoader
 import kotlinx.android.synthetic.main.text_selection.view.*
 import org.json.JSONObject
 import org.springframework.util.ReflectionUtils
+import timber.log.Timber
 import java.lang.ref.WeakReference
+
+fun JSONObject.nullStr(name: String): String? = when {
+    isNull(name) -> null
+    else -> optString(name)
+}
 
 /**
  * @author by mahavir on 3/31/16.
@@ -670,17 +671,16 @@ class FolioWebView : WebView {
 
     @JavascriptInterface
     fun setSelectionRect(json: String) {
-//    fun setSelectionRect(left: Int, top: Int, right: Int, bottom: Int, highlightId: String?, gid: String?, style: Int) {
         val o = JSONObject(json)
-        selectedHighlightId = o.optString("highlightId")
-        selectedGid = o.optString("gid")
+        selectedHighlightId = o.nullStr("highlightId")
+        selectedGid = o.nullStr("gid")
         selectedStyle = o.optInt("style")
         val currentSelectionRect = Rect()
         currentSelectionRect.left = (o.getInt("left") * density).toInt()
         currentSelectionRect.top = (o.getInt("top") * density).toInt()
         currentSelectionRect.right = (o.getInt("right") * density).toInt()
         currentSelectionRect.bottom = (o.getInt("bottom") * density).toInt()
-        Log.d(LOG_TAG, "-> setSelectionRect -> $currentSelectionRect")
+        Timber.d("-> setSelectionRect -> %s | %s", json, currentSelectionRect)
 
         computeTextSelectionRect(currentSelectionRect)
         uiHandler.post { showTextSelectionPopup() }
