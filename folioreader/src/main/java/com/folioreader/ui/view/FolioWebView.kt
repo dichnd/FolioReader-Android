@@ -549,12 +549,22 @@ class FolioWebView : WebView {
         }
     }
 
+    // try fixing:
+    // E/DecorView[]( 4623): Destroying unexpected ActionMode instance of TYPE_FLOATING; com.android.internal.view.FloatingActionMode@53014ab was not the current floating action mode! Expected null
+    private fun tryFinishActionMode() {
+        try {
+            actionMode?.finish()
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "-> tryFinishActionMode", e)
+        }
+    }
+
     override fun startActionMode(callback: Callback): ActionMode {
         Log.d(LOG_TAG, "-> startActionMode")
 
         textSelectionCb = TextSelectionCb()
         actionMode = super.startActionMode(textSelectionCb)
-        actionMode?.finish()
+        tryFinishActionMode()
 
         /*try {
             applyThemeColorToHandles()
@@ -575,7 +585,7 @@ class FolioWebView : WebView {
 
         textSelectionCb2 = TextSelectionCb2()
         actionMode = super.startActionMode(textSelectionCb2, type)
-        actionMode?.finish()
+        tryFinishActionMode()
 
         /*try {
             applyThemeColorToHandles()
