@@ -707,7 +707,7 @@ class FolioWebView : WebView {
         }
         Log.i(LOG_TAG, "-> currentSelectionRect intersects viewportRect")
 
-        if (selectionRect == currentSelectionRect && folioBookHolder.showMenu()) {
+        if (selectionRect == currentSelectionRect && folioBookHolder.needShowPopupWindow) {
             Log.i(
                 LOG_TAG, "-> setSelectionRect -> currentSelectionRect is equal to previous " +
                         "selectionRect so no need to computeTextSelectionRect and show popupWindow again"
@@ -782,7 +782,7 @@ class FolioWebView : WebView {
             popupRect.left -= dx
             popupRect.right -= dx
         }
-//        if (folioBookHolder.showMenu()) uiHandler.post { showTextSelectionPopup() }
+//        if (folioBookHolder.needShowPopupWindow) uiHandler.post { showTextSelectionPopup() }
 //        folioBookHolder.triggerHighlight(belowSelectionRect)
 //        HighlightUtil.sendHighlightTriggerAt(context, belowSelectionRect)
     }
@@ -808,12 +808,12 @@ class FolioWebView : WebView {
                 popupWindow = PopupWindow(viewTextSelection, WRAP_CONTENT, WRAP_CONTENT)
                 popupWindow.isClippingEnabled = false
 
-                if (folioBookHolder.showMenu()) {
-		    popupWindow.showAtLocation(
-		    	this@FolioWebView, Gravity.NO_GRAVITY,
+                if (folioBookHolder.needShowPopupWindow) {
+                    popupWindow.showAtLocation(
+                        this@FolioWebView, Gravity.NO_GRAVITY,
                         popupRect.left, popupRect.top
-		    )
-		}
+                    )
+                }
                 folioBookHolder.triggerHighlight(popupRect)
 //                HighlightUtil.sendHighlightTriggerAt(context, popupRect, selectedHighlightId)
                 folioActivityCallback.highlightTriggerAt(popupRect, selectedHighlightId, selectedGid, selectedStyle)

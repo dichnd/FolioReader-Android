@@ -11,9 +11,7 @@ interface FolioBookHolder {
     fun loadRangy(rangy: String)
     fun loadMarker(rangy: String, globalIds: String)
     var searchLocatorVisible: SearchLocator?
-    fun showMenu(): Boolean {
-        return true
-    }
+    val needShowPopupWindow: Boolean
     fun triggerHighlight(rect: Rect) {
         print("triggerHighlight at $rect)")
     }

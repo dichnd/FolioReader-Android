@@ -892,9 +892,7 @@ class FolioPageFragment : Fragment(),
         searchLocatorVisible = null
     }
 
-    override fun showMenu(): Boolean {
-        return true
-    }
+    override val needShowPopupWindow = true
 
     override fun triggerHighlight(rect: Rect) {
         Log.d(LOG_TAG, "triggerHighlight at: $rect")

@@ -986,9 +986,7 @@ class FolioPageView : FrameLayout,
         return context.resources.getString(resId)
     }
 
-    override fun showMenu(): Boolean {
-        return false
-    }
+    override val needShowPopupWindow = false
 
     override fun triggerHighlight(rect: Rect) {
         //TODO
