@@ -27,6 +27,11 @@ ext {
     licenseName = 'FreeBSD License'
     licenseUrl = 'https://en.wikipedia.org/wiki/FreeBSD_Documentation_License#License'
     allLicenses = ["FreeBSD"]
+
+    // if username & password is set via command line then we will use it, ex:
+    // gradle publish -P nexusUsername=someUser -P nexusPassword=somePassword
+    if(! project.hasProperty('nexusUsername')) nexusUsername = ''
+    if(! project.hasProperty('nexusPassword')) nexusPassword = ''
 }
 
 android {
