@@ -85,20 +85,19 @@ android {
 publishing {
     publications {
         mavenAar(MavenPublication) {
-            groupId = "$publishedGroupId"
-            artifactId = "$artifact"
-            version = "$libraryVersion"
+            groupId = publishedGroupId
+            artifactId = artifact
+            version = libraryVersion
             from components.android
-            afterEvaluate {
-                artifact sourcesJar
-            }
         }
     }
     repositories {
         maven {
-            url version.endsWith('-SNAPSHOT')
-                ? 'http://repo.bennuoc.com/repository/maven-snapshots'
-                : 'http://repo.bennuoc.com/repository/maven-releases'
+            if(version.endsWith('-SNAPSHOT')) {
+                url = 'http://repo.bennuoc.com/repository/maven-snapshots'
+            } else {
+                url = 'http://repo.bennuoc.com/repository/maven-releases'
+            }
             credentials {
                 // need set nexusUsername, nexusPassword in ~/.gradle/gradle.properties
                 // before run `gradle publish`
