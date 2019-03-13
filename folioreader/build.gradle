@@ -90,7 +90,7 @@ android {
 publishing {
     publications {
         mavenAar(MavenPublication) {
-            groupId = publishedGroupId
+            groupId = 'com.sandinh'
             artifactId = artifact
             version = libraryVersion
             from components.android
