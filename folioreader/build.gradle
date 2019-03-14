@@ -27,13 +27,7 @@ ext {
     licenseName = 'FreeBSD License'
     licenseUrl = 'https://en.wikipedia.org/wiki/FreeBSD_Documentation_License#License'
     allLicenses = ["FreeBSD"]
-
-    // if username & password is set via command line then we will use it, ex:
-    // gradle publish -P nexusUsername=someUser -P nexusPassword=somePassword
-    if(! project.hasProperty('nexusUsername')) nexusUsername = ''
-    if(! project.hasProperty('nexusPassword')) nexusPassword = ''
 }
-
 android {
     useLibrary 'org.apache.http.legacy'
     compileSdkVersion versions.androidCompileSdk
@@ -104,8 +98,11 @@ publishing {
                 url = 'http://repo.bennuoc.com/repository/maven-releases'
             }
             credentials {
-                // need set nexusUsername, nexusPassword in ~/.gradle/gradle.properties
-                // before run `gradle publish`
+                // need set nexusUsername, nexusPassword before run `gradle publish`
+                // this properties can be set in ~/.gradle/gradle.properties
+                // or by environment variable:
+                // ORG_GRADLE_PROJECT_nexusUsername=someUser
+                // ORG_GRADLE_PROJECT_nexusPassword=somePassword
                 username nexusUsername
                 password nexusPassword
             }

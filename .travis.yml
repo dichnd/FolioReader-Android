@@ -31,7 +31,7 @@ cache:
   - $HOME/.android/build-cache
 deploy:
   provider: script
-  script: ./gradlew publish -P nexusUsername=$NEXUS_USERNAME -P nexusPassword="$NEXUS_PASSWORD"
+  script: ./gradlew publish
   skip_cleanup: true
   on:
     branch: master
