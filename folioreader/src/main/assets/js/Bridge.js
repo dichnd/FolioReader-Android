@@ -818,7 +818,7 @@ function highlightSearchLocator(rangeCfi) {
  * @returns {object} JSON of {@link DOMRect}
  */
 function getSelectionRect(element) {
-    console.log("-> getSelectionRect");
+    console.log("-> getSelectionRect", element);
 
     var highlightId = null;
     var gid = null;
@@ -830,8 +830,8 @@ function getSelectionRect(element) {
         //need polyfill when use findIndex
         style = ['highlight_yellow', 'highlight_green', 'highlight_blue', 'highlight_pink'].findIndex(function(s) {
             return element.className.includes(s)
-        })
-        console.log(element.className, style)
+        });
+        console.log("-> in getSelectionRect", gid, highlightId, style);
         range = document.createRange();
         range.selectNodeContents(element);
     } else {
