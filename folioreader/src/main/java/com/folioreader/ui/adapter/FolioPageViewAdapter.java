@@ -19,7 +19,6 @@ import java.util.List;
  * Copy from FolioPageFragmentAdapter on 2/2019
  */
 public class FolioPageViewAdapter extends PagerAdapter {
-//    private static final String LOG_TAG = FolioPageViewAdapter.class.getSimpleName();
     private List<Link> mSpineReferences;
     private String mEpubFileName;
     private String mBookId;
@@ -56,7 +55,7 @@ public class FolioPageViewAdapter extends PagerAdapter {
     }
 
     @Override
-    public void destroyItem(ViewGroup container, int position, Object object) {
+    public void destroyItem(@NonNull ViewGroup container, int position, @NonNull  Object object) {
         ((FolioPageView) object).onStop();
         container.removeView((FolioPageView) object);
 //        views.set(position, null);
@@ -65,7 +64,7 @@ public class FolioPageViewAdapter extends PagerAdapter {
     @NonNull
     @Override
     public Object instantiateItem(@NonNull ViewGroup container, int position) {
-        FolioPageView folioPageView = getItem(position);
+        FolioPageView folioPageView = getItem(position); //FIXME why NonNull?
         //views.set(position, folioPageView);
         container.addView(folioPageView);
         return folioPageView;

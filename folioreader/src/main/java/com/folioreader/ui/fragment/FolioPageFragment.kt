@@ -51,6 +51,7 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.readium.r2.shared.Link
 import org.readium.r2.shared.Locations
+import timber.log.Timber
 import java.util.*
 import java.util.regex.Pattern
 
@@ -61,10 +62,6 @@ class FolioPageFragment : Fragment(),
     HtmlTaskCallback, MediaControllerCallbacks, FolioWebView.SeekBarListener, FolioBookHolder {
 
     companion object {
-
-        @JvmField
-        val LOG_TAG: String = FolioPageFragment::class.java.simpleName
-
         private const val BUNDLE_SPINE_INDEX = "BUNDLE_SPINE_INDEX"
         private const val BUNDLE_BOOK_TITLE = "BUNDLE_BOOK_TITLE"
         private const val BUNDLE_SPINE_ITEM = "BUNDLE_SPINE_ITEM"
@@ -332,7 +329,7 @@ class FolioPageFragment : Fragment(),
     fun scrollToLast() {
 
         val isPageLoading = loadingView == null || loadingView!!.visibility == View.VISIBLE
-        Log.v(LOG_TAG, "-> scrollToLast -> isPageLoading = $isPageLoading")
+        Timber.v("-> scrollToLast -> isPageLoading = $isPageLoading")
 
         if (!isPageLoading) {
             loadingView!!.show()
@@ -343,7 +340,7 @@ class FolioPageFragment : Fragment(),
     fun scrollToFirst() {
 
         val isPageLoading = loadingView == null || loadingView!!.visibility == View.VISIBLE
-        Log.v(LOG_TAG, "-> scrollToFirst -> isPageLoading = $isPageLoading")
+        Timber.v("-> scrollToFirst -> isPageLoading = $isPageLoading")
 
         if (!isPageLoading) {
             loadingView!!.show()
@@ -464,17 +461,17 @@ class FolioPageFragment : Fragment(),
 
                 val readLocator: ReadLocator?
                 if (savedInstanceState == null) {
-                    Log.v(LOG_TAG, "-> onPageFinished -> took from getEntryReadLocator")
+                    Timber.v("-> onPageFinished -> took from getEntryReadLocator")
                     readLocator = mActivityCallback!!.entryReadLocator
                 } else {
-                    Log.v(LOG_TAG, "-> onPageFinished -> took from bundle")
+                    Timber.v("-> onPageFinished -> took from bundle")
                     readLocator = savedInstanceState!!.getParcelable(BUNDLE_READ_LOCATOR_CONFIG_CHANGE)
                     savedInstanceState!!.remove(BUNDLE_READ_LOCATOR_CONFIG_CHANGE)
                 }
 
                 if (readLocator != null) {
                     val cfi = readLocator.locations.cfi
-                    Log.v(LOG_TAG, "-> onPageFinished -> readLocator -> " + cfi!!)
+                    Timber.v("-> onPageFinished -> readLocator -> %s", cfi)
                     mWebview!!.loadUrl(String.format(getString(R.string.callScrollToCfi), cfi))
                 } else {
                     loadingView!!.hide()
@@ -513,7 +510,7 @@ class FolioPageFragment : Fragment(),
                 try {
                     return WebResourceResponse("image/png", null, null)
                 } catch (e: Exception) {
-                    Log.e(LOG_TAG, "shouldInterceptRequest failed", e)
+                    Timber.e(e, "shouldInterceptRequest failed")
                 }
 
             }
@@ -530,7 +527,7 @@ class FolioPageFragment : Fragment(),
                 try {
                     return WebResourceResponse("image/png", null, null)
                 } catch (e: Exception) {
-                    Log.e(LOG_TAG, "shouldInterceptRequest failed", e)
+                    Timber.e(e, "shouldInterceptRequest failed")
                 }
 
             }
@@ -576,7 +573,7 @@ class FolioPageFragment : Fragment(),
 
     override fun onStop() {
         super.onStop()
-        Log.v(LOG_TAG, "-> onStop -> " + spineItem.href + " -> " + isCurrentFragment)
+        Timber.v("-> onStop -> %s -> %b", spineItem.href, isCurrentFragment)
 
         mediaController!!.stop()
         //TODO save last media overlay item
@@ -586,14 +583,14 @@ class FolioPageFragment : Fragment(),
     }
 
     fun getLastReadLocator(): ReadLocator? {
-        Log.v(LOG_TAG, "-> getLastReadLocator -> " + spineItem.href!!)
+        Timber.v("-> getLastReadLocator -> %s", spineItem.href)
         try {
             synchronized(this) {
                 mWebview!!.loadUrl(getString(R.string.callComputeLastReadCfi))
                 (this as java.lang.Object).wait(5000)
             }
         } catch (e: InterruptedException) {
-            Log.e(LOG_TAG, "-> ", e)
+            Timber.e(e)
         }
 
         return lastReadLocator
@@ -620,11 +617,7 @@ class FolioPageFragment : Fragment(),
 
     @JavascriptInterface
     fun setHorizontalPageCount(horizontalPageCount: Int) {
-        Log.v(
-            LOG_TAG, "-> setHorizontalPageCount = " + horizontalPageCount
-                    + " -> " + spineItem.href
-        )
-
+        Timber.v("-> setHorizontalPageCount = %d -> %s", horizontalPageCount, spineItem.href)
         mWebview!!.setHorizontalPageCount(horizontalPageCount)
     }
 
@@ -776,7 +769,7 @@ class FolioPageFragment : Fragment(),
      */
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        Log.v(LOG_TAG, "-> onSaveInstanceState -> ${spineItem.href}")
+        Timber.v("-> onSaveInstanceState -> %s", spineItem.href)
 
         this.outState = outState
         outState.putParcelable(BUNDLE_SEARCH_LOCATOR, searchLocatorVisible)
@@ -873,7 +866,7 @@ class FolioPageFragment : Fragment(),
     }
 
     fun highlightSearchLocator(searchLocator: SearchLocator) {
-        Log.v(LOG_TAG, "-> highlightSearchLocator")
+        Timber.v("-> highlightSearchLocator")
         this.searchLocatorVisible = searchLocator
 
         if (loadingView != null && loadingView!!.visibility != View.VISIBLE) {
@@ -887,7 +880,7 @@ class FolioPageFragment : Fragment(),
     }
 
     fun clearSearchLocator() {
-        Log.v(LOG_TAG, "-> clearSearchLocator -> " + spineItem.href!!)
+        Timber.v("-> clearSearchLocator -> %s", spineItem.href)
         mWebview!!.loadUrl(getString(R.string.callClearSelection))
         searchLocatorVisible = null
     }
@@ -895,6 +888,6 @@ class FolioPageFragment : Fragment(),
     override val needShowPopupWindow = true
 
     override fun triggerHighlight(rect: Rect) {
-        Log.d(LOG_TAG, "triggerHighlight at: $rect")
+        Timber.d("triggerHighlight at: $rect")
     }
 }

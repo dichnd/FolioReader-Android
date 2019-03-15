@@ -9,7 +9,6 @@ import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
 import android.util.DisplayMetrics
-import android.util.Log
 import android.view.*
 import android.view.ActionMode.Callback
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -51,8 +50,6 @@ fun JSONObject.nullStr(name: String): String? = when {
 class FolioWebView : WebView {
 
     companion object {
-
-        val LOG_TAG: String = FolioWebView::class.java.simpleName
         private const val IS_SCROLLING_CHECK_TIMER = 100
         private const val IS_SCROLLING_CHECK_MAX_DURATION = 10000
 
@@ -60,19 +57,19 @@ class FolioWebView : WebView {
         fun onWebViewConsoleMessage(cm: ConsoleMessage, LOG_TAG: String, msg: String): Boolean {
             when (cm.messageLevel()) {
                 ConsoleMessage.MessageLevel.LOG -> {
-                    Log.v(LOG_TAG, msg)
+                    Timber.tag(LOG_TAG).v(msg)
                     return true
                 }
                 ConsoleMessage.MessageLevel.DEBUG, ConsoleMessage.MessageLevel.TIP -> {
-                    Log.d(LOG_TAG, msg)
+                    Timber.tag(LOG_TAG).d(msg)
                     return true
                 }
                 ConsoleMessage.MessageLevel.WARNING -> {
-                    Log.w(LOG_TAG, msg)
+                    Timber.tag(LOG_TAG).w(msg)
                     return true
                 }
                 ConsoleMessage.MessageLevel.ERROR -> {
-                    Log.e(LOG_TAG, msg)
+                    Timber.tag(LOG_TAG).e(msg)
                     return true
                 }
                 else -> return false
@@ -172,18 +169,18 @@ class FolioWebView : WebView {
     private inner class HorizontalGestureListener : GestureDetector.SimpleOnGestureListener() {
 
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-            //Log.d(LOG_TAG, "-> onScroll -> e1 = " + e1 + ", e2 = " + e2 + ", distanceX = " + distanceX + ", distanceY = " + distanceY);
+            //Timber.d("-> onScroll -> e1 = " + e1 + ", e2 = " + e2 + ", distanceX = " + distanceX + ", distanceY = " + distanceY);
             lastScrollType = LastScrollType.USER
             return false
         }
 
         override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
-            //Log.d(LOG_TAG, "-> onFling -> e1 = " + e1 + ", e2 = " + e2 + ", velocityX = " + velocityX + ", velocityY = " + velocityY);
+            //Timber.d("-> onFling -> e1 = " + e1 + ", e2 = " + e2 + ", velocityX = " + velocityX + ", velocityY = " + velocityY);
 
             if (!(webViewPager?.isScrolling ?: true)) {
                 // Need to complete the scroll as ViewPager thinks these touch events should not
                 // scroll it's pages.
-                //Log.d(LOG_TAG, "-> onFling -> completing scroll");
+                //Timber.d("-> onFling -> completing scroll");
                 uiHandler.postDelayed({
                     // Delayed to avoid inconsistency of scrolling in WebView
                     scrollTo(getScrollXPixelsForPage(webViewPager!!.currentItem), 0)
@@ -195,7 +192,7 @@ class FolioWebView : WebView {
         }
 
         override fun onDown(event: MotionEvent?): Boolean {
-            //Log.v(LOG_TAG, "-> onDown -> " + event.toString());
+            //Timber.v("-> onDown -> " + event.toString());
 
             eventActionDown = MotionEvent.obtain(event)
             super@FolioWebView.onTouchEvent(event)
@@ -205,7 +202,7 @@ class FolioWebView : WebView {
 
     @JavascriptInterface
     fun dismissPopupWindow(): Boolean {
-        Log.d(LOG_TAG, "-> dismissPopupWindow -> " + folioBookHolder.currentHref)
+        Timber.d("-> dismissPopupWindow -> %s", folioBookHolder.currentHref)
         val wasShowing = popupWindow.isShowing
         if (Looper.getMainLooper().thread == Thread.currentThread()) {
             popupWindow.dismiss()
@@ -224,7 +221,7 @@ class FolioWebView : WebView {
 
     override fun destroy() {
         super.destroy()
-        Log.d(LOG_TAG, "-> destroy")
+        Timber.d("-> destroy")
         dismissPopupWindow()
         destroyed = true
     }
@@ -232,13 +229,13 @@ class FolioWebView : WebView {
     private inner class VerticalGestureListener : GestureDetector.SimpleOnGestureListener() {
 
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-            //Log.v(LOG_TAG, "-> onScroll -> e1 = " + e1 + ", e2 = " + e2 + ", distanceX = " + distanceX + ", distanceY = " + distanceY);
+            //Timber.v("-> onScroll -> e1 = " + e1 + ", e2 = " + e2 + ", distanceX = " + distanceX + ", distanceY = " + distanceY);
             lastScrollType = LastScrollType.USER
             return false
         }
 
         override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
-            //Log.v(LOG_TAG, "-> onFling -> e1 = " + e1 + ", e2 = " + e2 + ", velocityX = " + velocityX + ", velocityY = " + velocityY);
+            //Timber.v("-> onFling -> e1 = " + e1 + ", e2 = " + e2 + ", velocityX = " + velocityX + ", velocityY = " + velocityY);
             lastScrollType = LastScrollType.USER
             return false
         }
@@ -249,7 +246,7 @@ class FolioWebView : WebView {
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
     private fun init() {
-        Log.v(LOG_TAG, "-> init")
+        Timber.v("-> init")
 
         uiHandler = Handler()
         displayMetrics = resources.displayMetrics
@@ -265,7 +262,7 @@ class FolioWebView : WebView {
     }
 
     fun initViewTextSelection() {
-        Log.v(LOG_TAG, "-> initViewTextSelection")
+        Timber.v("-> initViewTextSelection")
 
         val textSelectionMiddleDrawable = ContextCompat.getDrawable(
             context,
@@ -284,28 +281,28 @@ class FolioWebView : WebView {
         viewTextSelection.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
 
         viewTextSelection.yellowHighlight.setOnClickListener {
-            Log.v(LOG_TAG, "-> onClick -> yellowHighlight")
+            Timber.v("-> onClick -> yellowHighlight")
             onHighlightColorItemsClicked(HighlightStyle.Yellow, false)
         }
         viewTextSelection.greenHighlight.setOnClickListener {
-            Log.v(LOG_TAG, "-> onClick -> greenHighlight")
+            Timber.v("-> onClick -> greenHighlight")
             onHighlightColorItemsClicked(HighlightStyle.Green, false)
         }
         viewTextSelection.blueHighlight.setOnClickListener {
-            Log.v(LOG_TAG, "-> onClick -> blueHighlight")
+            Timber.v("-> onClick -> blueHighlight")
             onHighlightColorItemsClicked(HighlightStyle.Blue, false)
         }
         viewTextSelection.pinkHighlight.setOnClickListener {
-            Log.v(LOG_TAG, "-> onClick -> pinkHighlight")
+            Timber.v("-> onClick -> pinkHighlight")
             onHighlightColorItemsClicked(HighlightStyle.Pink, false)
         }
         viewTextSelection.underlineHighlight.setOnClickListener {
-            Log.v(LOG_TAG, "-> onClick -> underlineHighlight")
+            Timber.v("-> onClick -> underlineHighlight")
             onHighlightColorItemsClicked(HighlightStyle.Underline, false)
         }
 
         viewTextSelection.deleteHighlight.setOnClickListener {
-            Log.v(LOG_TAG, "-> onClick -> deleteHighlight")
+            Timber.v("-> onClick -> deleteHighlight")
             dismissPopupWindow()
             loadUrl("javascript:clearSelection()")
             loadUrl("javascript:deleteThisHighlight()")
@@ -332,20 +329,20 @@ class FolioWebView : WebView {
 
         when (id) {
             R.id.copySelection -> {
-                Log.v(LOG_TAG, "-> onTextSelectionItemClicked -> copySelection -> $selectedText")
+                Timber.v("-> onTextSelectionItemClicked -> copySelection -> $selectedText")
                 UiUtil.copyToClipboard(context, selectedText)
                 Toast.makeText(context, context.getString(R.string.copied), Toast.LENGTH_SHORT).show()
             }
             R.id.shareSelection -> {
-                Log.v(LOG_TAG, "-> onTextSelectionItemClicked -> shareSelection -> $selectedText")
+                Timber.v("-> onTextSelectionItemClicked -> shareSelection -> $selectedText")
                 UiUtil.share(context, selectedText)
             }
             R.id.defineSelection -> {
-                Log.v(LOG_TAG, "-> onTextSelectionItemClicked -> defineSelection -> $selectedText")
+                Timber.v("-> onTextSelectionItemClicked -> defineSelection -> $selectedText")
                 uiHandler.post { showDictDialog(selectedText) }
             }
             else -> {
-                Log.w(LOG_TAG, "-> onTextSelectionItemClicked -> unknown id = $id")
+                Timber.w("-> onTextSelectionItemClicked -> unknown id = $id")
             }
         }
     }
@@ -365,7 +362,7 @@ class FolioWebView : WebView {
 
     @JavascriptInterface
     fun deleteThisHighlight(id: String?) {
-        Log.d(LOG_TAG, "-> deleteThisHighlight")
+        Timber.d("-> deleteThisHighlight")
 
         if (id.isNullOrEmpty())
             return
@@ -408,7 +405,7 @@ class FolioWebView : WebView {
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        //Log.v(LOG_TAG, "-> onTouchEvent -> " + AppUtil.actionToString(event.getAction()));
+        //Timber.v("-> onTouchEvent -> " + AppUtil.actionToString(event.getAction()));
 
         if (event == null)
             return false
@@ -429,7 +426,7 @@ class FolioWebView : WebView {
     }
 
     private fun computeHorizontalScroll(event: MotionEvent): Boolean {
-        //Log.v(LOG_TAG, "-> computeHorizontalScroll");
+        //Timber.v("-> computeHorizontalScroll");
 
         // Rare condition in fast scrolling
 //        if (!::webViewPager.isInitialized)
@@ -445,12 +442,12 @@ class FolioWebView : WebView {
     }
 
     fun getScrollXDpForPage(page: Int): Int {
-        //Log.v(LOG_TAG, "-> getScrollXDpForPage -> page = " + page);
+        //Timber.v("-> getScrollXDpForPage -> page = " + page);
         return page * pageWidthCssDp
     }
 
     fun getScrollXPixelsForPage(page: Int): Int {
-        //Log.v(LOG_TAG, "-> getScrollXPixelsForPage -> page = " + page);
+        //Timber.v("-> getScrollXPixelsForPage -> page = " + page);
         return Math.ceil((page * pageWidthCssPixels).toDouble()).toInt()
     }
 
@@ -465,7 +462,7 @@ class FolioWebView : WebView {
 
     override fun scrollTo(x: Int, y: Int) {
         super.scrollTo(x, y)
-        //Log.d(LOG_TAG, "-> scrollTo -> x = " + x);
+        //Timber.d("-> scrollTo -> x = " + x);
         lastScrollType = LastScrollType.PROGRAMMATIC
     }
 
@@ -474,7 +471,7 @@ class FolioWebView : WebView {
         super.onScrollChanged(l, t, oldl, oldt)
 
         if (lastScrollType == LastScrollType.USER) {
-            //Log.d(LOG_TAG, "-> onScrollChanged -> scroll initiated by user");
+            //Timber.d("-> onScrollChanged -> scroll initiated by user");
             folioBookHolder.searchLocatorVisible = null
         }
 
@@ -492,12 +489,12 @@ class FolioWebView : WebView {
     private inner class TextSelectionCb : ActionMode.Callback {
 
         override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
-            Log.d(LOG_TAG, "-> onCreateActionMode")
+            Timber.d("-> onCreateActionMode")
             return true
         }
 
         override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
-            Log.d(LOG_TAG, "-> onPrepareActionMode")
+            Timber.d("-> onPrepareActionMode")
 
             evaluateJavascript("javascript:getSelectionRect()") { value ->
                 setSelectionRect(value)
@@ -506,12 +503,12 @@ class FolioWebView : WebView {
         }
 
         override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
-            Log.d(LOG_TAG, "-> onActionItemClicked")
+            Timber.d("-> onActionItemClicked")
             return false
         }
 
         override fun onDestroyActionMode(mode: ActionMode) {
-            Log.d(LOG_TAG, "-> onDestroyActionMode")
+            Timber.d("-> onDestroyActionMode")
             dismissPopupWindow()
         }
     }
@@ -520,28 +517,28 @@ class FolioWebView : WebView {
     private inner class TextSelectionCb2 : ActionMode.Callback2() {
 
         override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
-            Log.d(LOG_TAG, "-> onCreateActionMode")
+            Timber.d("-> onCreateActionMode")
             menu.clear()
             return true
         }
 
         override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
-            Log.d(LOG_TAG, "-> onPrepareActionMode")
+            Timber.d("-> onPrepareActionMode")
             return false
         }
 
         override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
-            Log.d(LOG_TAG, "-> onActionItemClicked")
+            Timber.d("-> onActionItemClicked")
             return false
         }
 
         override fun onDestroyActionMode(mode: ActionMode) {
-            Log.d(LOG_TAG, "-> onDestroyActionMode")
+            Timber.d("-> onDestroyActionMode")
             dismissPopupWindow()
         }
 
         override fun onGetContentRect(mode: ActionMode, view: View, outRect: Rect) {
-            Log.d(LOG_TAG, "-> onGetContentRect")
+            Timber.d("-> onGetContentRect")
 
             evaluateJavascript("javascript:getSelectionRect()") { value ->
                 setSelectionRect(value)
@@ -555,12 +552,12 @@ class FolioWebView : WebView {
         try {
             actionMode?.finish()
         } catch (e: Exception) {
-            Log.e(LOG_TAG, "-> tryFinishActionMode", e)
+            Timber.e(e, "-> tryFinishActionMode")
         }
     }
 
     override fun startActionMode(callback: Callback): ActionMode {
-        Log.d(LOG_TAG, "-> startActionMode")
+        Timber.d("-> startActionMode")
 
         textSelectionCb = TextSelectionCb()
         actionMode = super.startActionMode(textSelectionCb)
@@ -569,8 +566,7 @@ class FolioWebView : WebView {
         /*try {
             applyThemeColorToHandles()
         } catch (e: Exception) {
-            Log.w(LOG_TAG, "-> startActionMode -> Failed to apply theme colors to selection " +
-                    "handles", e)
+            Timber.w(e, "-> startActionMode -> Failed to apply theme colors to selection handles")
         }*/
 
         return actionMode as ActionMode
@@ -581,7 +577,7 @@ class FolioWebView : WebView {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     override fun startActionMode(callback: Callback, type: Int): ActionMode {
-        Log.d(LOG_TAG, "-> startActionMode")
+        Timber.d("-> startActionMode")
 
         textSelectionCb2 = TextSelectionCb2()
         actionMode = super.startActionMode(textSelectionCb2, type)
@@ -590,8 +586,7 @@ class FolioWebView : WebView {
         /*try {
             applyThemeColorToHandles()
         } catch (e: Exception) {
-            Log.w(LOG_TAG, "-> startActionMode -> Failed to apply theme colors to selection " +
-                    "handles", e)
+            Timber.w(e, "-> startActionMode -> Failed to apply theme colors to selection handles")
         }*/
 
         return actionMode as ActionMode
@@ -601,7 +596,7 @@ class FolioWebView : WebView {
     }
 
     private fun applyThemeColorToHandles() {
-        Log.v(LOG_TAG, "-> applyThemeColorToHandles")
+        Timber.v("-> applyThemeColorToHandles")
 
         if (Build.VERSION.SDK_INT < 23) {
             val folioActivityRef: WeakReference<FolioActivity> = folioActivityCallback.activity
@@ -702,31 +697,29 @@ class FolioWebView : WebView {
     }
 
     private fun computeTextSelectionRect(currentSelectionRect: Rect) {
-        Log.v(LOG_TAG, "-> computeTextSelectionRect")
+        Timber.v("-> computeTextSelectionRect")
 
         val viewportRect = folioActivityCallback.getViewportRect(DisplayUnit.PX)
-        Log.d(LOG_TAG, "-> viewportRect -> $viewportRect")
+        Timber.d("-> viewportRect -> $viewportRect")
 
         if (!Rect.intersects(viewportRect, currentSelectionRect)) {
-            Log.i(LOG_TAG, "-> currentSelectionRect doesn't intersects viewportRect")
+            Timber.i("-> currentSelectionRect doesn't intersects viewportRect")
             uiHandler.post {
                 popupWindow.dismiss()
                 uiHandler.removeCallbacks(isScrollingRunnable)
             }
             return
         }
-        Log.i(LOG_TAG, "-> currentSelectionRect intersects viewportRect")
+        Timber.i("-> currentSelectionRect intersects viewportRect")
 
         if (selectionRect == currentSelectionRect && folioBookHolder.needShowPopupWindow) {
-            Log.i(
-                LOG_TAG, "-> setSelectionRect -> currentSelectionRect is equal to previous " +
+            Timber.i("-> setSelectionRect -> currentSelectionRect is equal to previous " +
                         "selectionRect so no need to computeTextSelectionRect and show popupWindow again"
             )
             return
         }
 
-        Log.i(
-            LOG_TAG, "-> setSelectionRect -> currentSelectionRect is not equal to previous " +
+        Timber.i("-> setSelectionRect -> currentSelectionRect is not equal to previous " +
                     "selectionRect so computeTextSelectionRect and show popupWindow"
         )
         selectionRect = currentSelectionRect
@@ -736,8 +729,8 @@ class FolioWebView : WebView {
         val belowSelectionRect = Rect(viewportRect)
         belowSelectionRect.top = selectionRect.bottom + handleHeight
 
-        //Log.d(LOG_TAG, "-> aboveSelectionRect -> " + aboveSelectionRect);
-        //Log.d(LOG_TAG, "-> belowSelectionRect -> " + belowSelectionRect);
+        //Timber.d("-> aboveSelectionRect -> " + aboveSelectionRect);
+        //Timber.d("-> belowSelectionRect -> " + belowSelectionRect);
 
         // Priority to show popupWindow will be as following -
         // 1. Show popupWindow below selectionRect, if space available
@@ -749,11 +742,11 @@ class FolioWebView : WebView {
         popupRect.top = belowSelectionRect.top
         popupRect.right = popupRect.left + viewTextSelection.measuredWidth
         popupRect.bottom = popupRect.top + viewTextSelection.measuredHeight
-        //Log.d(LOG_TAG, "-> Pre decision popupRect -> " + popupRect);
+        //Timber.d("-> Pre decision popupRect -> " + popupRect);
 
         val popupY: Int
         if (belowSelectionRect.contains(popupRect)) {
-            Log.i(LOG_TAG, "-> show below")
+            Timber.i("-> show below")
             popupY = belowSelectionRect.top
 
         } else {
@@ -763,12 +756,12 @@ class FolioWebView : WebView {
             popupRect.bottom = popupRect.top + viewTextSelection.measuredHeight
 
             if (aboveSelectionRect.contains(popupRect)) {
-                Log.i(LOG_TAG, "-> show above")
+                Timber.i("-> show above")
                 popupY = aboveSelectionRect.bottom - popupRect.height()
 
             } else {
 
-                Log.i(LOG_TAG, "-> show in middle")
+                Timber.i("-> show in middle")
                 val popupYDiff = (viewTextSelection.measuredHeight - selectionRect.height()) / 2
                 popupY = selectionRect.top - popupYDiff
             }
@@ -778,7 +771,7 @@ class FolioWebView : WebView {
         val popupX = selectionRect.left - popupXDiff
 
         popupRect.offsetTo(popupX, popupY)
-        //Log.d(LOG_TAG, "-> Post decision popupRect -> " + popupRect);
+        //Timber.d("-> Post decision popupRect -> " + popupRect);
 
         // Check if popupRect left side is going outside of the viewportRect
         if (popupRect.left < viewportRect.left) {
@@ -798,8 +791,8 @@ class FolioWebView : WebView {
     }
 
     private fun showTextSelectionPopup() {
-        Log.v(LOG_TAG, "-> showTextSelectionPopup")
-        Log.d(LOG_TAG, "-> showTextSelectionPopup -> To be laid out popupRect -> $popupRect")
+        Timber.v("-> showTextSelectionPopup")
+        Timber.d("-> showTextSelectionPopup -> To be laid out popupRect -> %s", popupRect)
 
         popupWindow.dismiss()
         oldScrollX = scrollX
@@ -813,7 +806,7 @@ class FolioWebView : WebView {
                     lastTouchAction == MotionEvent.ACTION_MOVE
 
             if (oldScrollX == currentScrollX && oldScrollY == currentScrollY && !inTouchMode) {
-                Log.i(LOG_TAG, "-> Stopped scrolling, show Popup")
+                Timber.i("-> Stopped scrolling, show Popup")
                 popupWindow.dismiss()
                 popupWindow = PopupWindow(viewTextSelection, WRAP_CONTENT, WRAP_CONTENT)
                 popupWindow.isClippingEnabled = false
@@ -828,7 +821,7 @@ class FolioWebView : WebView {
 //                HighlightUtil.sendHighlightTriggerAt(context, popupRect, selectedHighlightId)
                 folioActivityCallback.highlightTriggerAt(popupRect, selectedHighlightId, selectedGid, selectedStyle)
             } else {
-                Log.i(LOG_TAG, "-> Still scrolling, don't show Popup")
+                Timber.i("-> Still scrolling, don't show Popup")
                 oldScrollX = currentScrollX
                 oldScrollY = currentScrollY
                 isScrollingCheckDuration += IS_SCROLLING_CHECK_TIMER

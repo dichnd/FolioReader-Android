@@ -44,6 +44,7 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.readium.r2.shared.Link
 import org.readium.r2.shared.Locations
+import timber.log.Timber
 import java.util.*
 import java.util.regex.Pattern
 
@@ -54,10 +55,6 @@ class FolioPageView : FrameLayout,
     HtmlTaskCallback, MediaControllerCallbacks, FolioWebView.SeekBarListener, FolioBookHolder {
 
     companion object {
-
-        @JvmField
-        val LOG_TAG: String = FolioPageView::class.java.simpleName
-
         private const val BUNDLE_SPINE_INDEX = "BUNDLE_SPINE_INDEX"
         private const val BUNDLE_BOOK_TITLE = "BUNDLE_BOOK_TITLE"
         private const val BUNDLE_SPINE_ITEM = "BUNDLE_SPINE_ITEM"
@@ -159,7 +156,7 @@ class FolioPageView : FrameLayout,
         chapterUrl = Uri.parse(mActivityCallback?.streamerUrl + spineItem.href!!.substring(1))
 
         searchLocatorVisible = savedInstanceState?.getParcelable(BUNDLE_SEARCH_LOCATOR)
-        Log.d(LOG_TAG, "initView $spineIndex")
+        Timber.d("initView %d", spineIndex)
 
 //        if (spineItem != null) {
 //            // SMIL Parsing not yet implemented in r2-streamer-kotlin
@@ -338,7 +335,7 @@ class FolioPageView : FrameLayout,
     fun scrollToLast() {
 
         val isPageLoading = loadingView == null || loadingView!!.visibility == View.VISIBLE
-        Log.v(LOG_TAG, "-> scrollToLast -> isPageLoading = $isPageLoading")
+        Timber.v("-> scrollToLast -> isPageLoading = $isPageLoading")
 
         if (!isPageLoading) {
             loadingView!!.show()
@@ -349,7 +346,7 @@ class FolioPageView : FrameLayout,
     fun scrollToFirst() {
 
         val isPageLoading = loadingView == null || loadingView!!.visibility == View.VISIBLE
-        Log.v(LOG_TAG, "-> scrollToFirst -> isPageLoading = $isPageLoading")
+        Timber.v("-> scrollToFirst -> isPageLoading = $isPageLoading")
 
         if (!isPageLoading) {
             loadingView!!.show()
@@ -406,7 +403,7 @@ class FolioPageView : FrameLayout,
     private val webViewClient = object : WebViewClient() {
 
         override fun onPageFinished(view: WebView, url: String) {
-            Log.d(LOG_TAG, "onPageFinished")
+            Timber.d("onPageFinished")
             mIsPageLoaded = true // TODO do we need reset mIsPageLoaded = false in onPageStarted ?
             mWebview!!.loadUrl("javascript:checkCompatMode()")
 //            mWebview!!.loadUrl("javascript:alert(getReadingTime())")
@@ -494,17 +491,17 @@ class FolioPageView : FrameLayout,
                 val readLocator: ReadLocator?
                 // FIXME dich only get readLocator from mActivityCallback
                 if (savedInstanceState == null) {
-                    Log.v(LOG_TAG, "-> onPageFinished -> took from getEntryReadLocator")
+                    Timber.v("-> onPageFinished -> took from getEntryReadLocator")
                     readLocator = mActivityCallback!!.entryReadLocator
                 } else {
-                    Log.v(LOG_TAG, "-> onPageFinished -> took from bundle")
+                    Timber.v("-> onPageFinished -> took from bundle")
                     readLocator = savedInstanceState!!.getParcelable(BUNDLE_READ_LOCATOR_CONFIG_CHANGE)
                     savedInstanceState!!.remove(BUNDLE_READ_LOCATOR_CONFIG_CHANGE)
                 }
 
                 if (readLocator != null) {
                     val cfi = readLocator.locations.cfi
-                    Log.v(LOG_TAG, "-> onPageFinished -> readLocator -> " + cfi!!)
+                    Timber.v("-> onPageFinished -> readLocator -> %s", cfi)
                     mWebview!!.loadUrl(String.format(getString(R.string.callScrollToCfi), cfi))
                 } else {
                     loadingView!!.hide()
@@ -543,7 +540,7 @@ class FolioPageView : FrameLayout,
                 try {
                     return WebResourceResponse("image/png", null, null)
                 } catch (e: Exception) {
-                    Log.e(LOG_TAG, "shouldInterceptRequest failed", e)
+                    Timber.e(e, "shouldInterceptRequest failed")
                 }
 
             }
@@ -560,7 +557,7 @@ class FolioPageView : FrameLayout,
                 try {
                     return WebResourceResponse("image/png", null, null)
                 } catch (e: Exception) {
-                    Log.e(LOG_TAG, "shouldInterceptRequest failed", e)
+                    Timber.e(e, "shouldInterceptRequest failed")
                 }
 
             }
@@ -606,7 +603,7 @@ class FolioPageView : FrameLayout,
 
     fun onStop() {
 //        super.onStop()
-        Log.v(LOG_TAG, "-> onStop -> " + spineItem.href + " -> " + isCurrentPage)
+        Timber.v("-> onStop -> %s -> %b", spineItem.href, isCurrentPage)
 
 //        mediaController!!.stop()
         //TODO save last media overlay item
@@ -616,14 +613,14 @@ class FolioPageView : FrameLayout,
     }
 
     fun getLastReadLocator(): ReadLocator? {
-        Log.v(LOG_TAG, "-> getLastReadLocator -> " + spineItem.href!!)
+        Timber.v("-> getLastReadLocator -> %s", spineItem.href)
         try {
             synchronized(this) {
                 mWebview!!.loadUrl(getString(R.string.callComputeLastReadCfi))
                 (this as java.lang.Object).wait(5000)
             }
         } catch (e: InterruptedException) {
-            Log.e(LOG_TAG, "-> ", e)
+            Timber.e(e)
         }
 
         return lastReadLocator
@@ -650,10 +647,7 @@ class FolioPageView : FrameLayout,
 
     @JavascriptInterface
     fun setHorizontalPageCount(horizontalPageCount: Int) {
-        Log.v(
-            LOG_TAG, "-> setHorizontalPageCount = " + horizontalPageCount
-                    + " -> " + spineItem.href
-        )
+        Timber.v("-> setHorizontalPageCount = %d -> %s", horizontalPageCount, spineItem.href)
 
         mWebview!!.setHorizontalPageCount(horizontalPageCount)
     }
@@ -849,7 +843,7 @@ class FolioPageView : FrameLayout,
 //     */
 //    override fun onSaveInstanceState(outState: Bundle) {
 //        super.onSaveInstanceState(outState)
-//        Log.v(LOG_TAG, "-> onSaveInstanceState -> ${spineItem.href}")
+//        Timber.v("-> onSaveInstanceState -> ${spineItem.href}")
 //
 //        this.outState = outState
 //        outState.putParcelable(BUNDLE_SEARCH_LOCATOR, searchLocatorVisible)
@@ -905,7 +899,7 @@ class FolioPageView : FrameLayout,
 
     @JavascriptInterface
     fun getUpdatedHighlightId(id: String?, style: String) {
-        Log.d(LOG_TAG, "getUpdatedHighlightId -- $id, $style")
+        Timber.d("getUpdatedHighlightId -- $id, $style")
 //        if (id != null) {
 //            val highlightImpl = HighLightTable.updateHighlightStyle(id, style)
 //            if (highlightImpl != null) {
@@ -945,7 +939,7 @@ class FolioPageView : FrameLayout,
     }
 
     fun scrollToRangy(rangy: String) {
-        Log.d(LOG_TAG, "scrollToRangy -- $rangy")
+        Timber.d("scrollToRangy -- $rangy")
         this.rangyToScroll = rangy
 
         loadingView?.let {
@@ -963,7 +957,7 @@ class FolioPageView : FrameLayout,
     }
 
     fun highlightSearchLocator(searchLocator: SearchLocator) {
-        Log.v(LOG_TAG, "-> highlightSearchLocator")
+        Timber.v("-> highlightSearchLocator")
         this.searchLocatorVisible = searchLocator
 
         if (loadingView != null && loadingView!!.visibility != View.VISIBLE) {
@@ -977,7 +971,7 @@ class FolioPageView : FrameLayout,
     }
 
     fun clearSearchLocator() {
-        Log.v(LOG_TAG, "-> clearSearchLocator -> " + spineItem.href!!)
+        Timber.v("-> clearSearchLocator -> %s", spineItem.href)
         mWebview!!.loadUrl(getString(R.string.callClearSelection))
         searchLocatorVisible = null
     }
@@ -1020,10 +1014,10 @@ class FolioPageView : FrameLayout,
 //
 //    @Override
 //    public boolean onInterceptTouchEvent(MotionEvent ev) {
-//        Log.d(LOG_TAG, "-> onInterceptTouchEvent -> " + AppUtil.actionToString(ev.getAction()));
-//        Log.d(LOG_TAG, "onInterceptTouchEvent: spinItem: " + spineItem.getHref() + ": " + mIsPageLoaded);
-//        Log.d(LOG_TAG, "webViewPager child count: " + webViewPager.getAdapter().getCount());
-//        Log.d(LOG_TAG, "webViewPager current page: " + webViewPager.getCurrentItem());
+//        Timber.d("-> onInterceptTouchEvent -> " + AppUtil.actionToString(ev.getAction()));
+//        Timber.d("onInterceptTouchEvent: spinItem: " + spineItem.getHref() + ": " + mIsPageLoaded);
+//        Timber.d("webViewPager child count: " + webViewPager.getAdapter().getCount());
+//        Timber.d("webViewPager current page: " + webViewPager.getCurrentItem());
 //        int count = webViewPager.getAdapter().getCount();
 //        int current = webViewPager.getCurrentItem();
 //        if (current < count - 1) {
